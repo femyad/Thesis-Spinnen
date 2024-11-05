@@ -15,11 +15,13 @@ public class TranslateMovement : MonoBehaviour
     private bool isJumping = false;
     private float verticalVelocity = 0;
     private float currentSpeed = 0;
+    private Animator animator;
     
 
     // Start is called before the first frame update
     void Start()
     {
+        animator = GetComponent<Animator>();
         currentSpeed = 0;
     }
 
@@ -52,6 +54,8 @@ public class TranslateMovement : MonoBehaviour
         // Clamp currentSpeed within -moveSpeed to moveSpeed
         //Clamp restricts a value to a given range. If the value is below the minimum, it returns the minimum; if above the maximum, it returns the maximum.
         currentSpeed = Mathf.Clamp(currentSpeed, -moveSpeed, moveSpeed);
+        Debug.Log(currentSpeed);
+        animator.SetFloat("moveSpeed", currentSpeed);
 
         // Move the object with the accelerated currentSpeed
         transform.Translate(Vector3.forward * Time.deltaTime * currentSpeed);
@@ -63,6 +67,7 @@ public class TranslateMovement : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Space) && !isJumping)
         {
             isJumping = true;
+            animator.SetTrigger("jump");
             verticalVelocity = jumpForce; 
         }
 
