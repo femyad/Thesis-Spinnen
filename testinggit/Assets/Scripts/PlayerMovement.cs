@@ -21,7 +21,7 @@ public class PlayerMovement : MonoBehaviour
     }
 
     // Update is called once per frame
-    void FixedUpdate()
+    void Update()
     {
         //rb.AddForce (0,0,forwardForce * Time.deltaTime);
         bool isMoving = false;
@@ -71,7 +71,7 @@ public class PlayerMovement : MonoBehaviour
     {
         currentSpeed += direction * acceleration * Time.deltaTime;
         currentSpeed = Vector3.ClampMagnitude(currentSpeed, maxSpeed);
-        rb.AddForce(currentSpeed *  Time.deltaTime);
+        rb.AddForce(currentSpeed);
     }
 
     public void ResetVelocity()
