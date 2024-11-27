@@ -8,12 +8,20 @@ public class TranslateMovement : MonoBehaviour
     public float verticalInput;
     public float turnSpeed = 10;
     public float moveSpeed = 10;
+
+    // jumping vars:
+    public float acceleration = 2;
     public float jumpForce = 5;
     public float gravity = 9.8f;
-    public float acceleration = 2;
-
     private bool isJumping = false;
-    private float verticalVelocity = 0;
+    private float jumpStartTime;
+    private Vector3 velocity;
+    //////////////
+
+    public float raycastDistance = 1f; // Raycast length to detect terrain (jumping)
+    public LayerMask terrainLayer; // Layer mask for the terrain (jumping)
+    public spiderAllignment allignment;
+    
     private float currentSpeed = 0;
     private Animator animator;
     
@@ -22,7 +30,9 @@ public class TranslateMovement : MonoBehaviour
     void Start()
     {
         animator = GetComponent<Animator>();
+        allignment = GetComponent<spiderAllignment>();
         currentSpeed = 0;
+        Debug.Log(allignment);
     }
 
     // Update is called once per frame
@@ -54,7 +64,6 @@ public class TranslateMovement : MonoBehaviour
         // Clamp currentSpeed within -moveSpeed to moveSpeed
         //Clamp restricts a value to a given range. If the value is below the minimum, it returns the minimum; if above the maximum, it returns the maximum.
         currentSpeed = Mathf.Clamp(currentSpeed, -moveSpeed, moveSpeed);
-        Debug.Log(currentSpeed);
         animator.SetFloat("moveSpeed", currentSpeed);
 
         // Move the object with the accelerated currentSpeed
@@ -66,25 +75,37 @@ public class TranslateMovement : MonoBehaviour
         // Jump logic
         if (Input.GetKeyDown(KeyCode.Space) && !isJumping)
         {
+            allignment.enabled = false;
             isJumping = true;
+            jumpStartTime = Time.time;
             animator.SetTrigger("jump");
-            verticalVelocity = jumpForce; 
+            velocity = new Vector3(0, jumpForce, 0); // Set the jump velocity 
         }
 
-        // Apply vertical movement for jumping or falling
+       // Apply vertical movement for jumping or falling
         if (isJumping)
         {
-            verticalVelocity -= gravity * Time.deltaTime; // Simulate gravity 
-            transform.Translate(Vector3.up * verticalVelocity * Time.deltaTime);
+            float elapsedTime = Time.time - jumpStartTime;
+            // Debug.Log(elapsedTime);
+            velocity.y = jumpForce - (gravity * elapsedTime * 1.5f); //  gravity
+            transform.Translate(velocity * Time.deltaTime, Space.World);
 
-            // Check if the object has landed (assume y = 0 is the ground)
-            if (transform.position.y <= 0)
+            // Check for landing
+            if (Physics.Raycast(transform.position + Vector3.up*raycastDistance, Vector3.down, raycastDistance, terrainLayer))
             {
-                transform.position = new Vector3(transform.position.x, 0, transform.position.z); // Reset to ground level
                 isJumping = false;
-                verticalVelocity = 0;
+                Debug.Log("landing");
+                allignment.enabled = true;
+                velocity = Vector3.zero; // Reset velocity on landing
             }
         }
 
+
+        // Update animator speed parameter 
+        float normalizedSpeed = Mathf.Abs(currentSpeed) / moveSpeed;
+        animator.SetFloat("moveSpeed", normalizedSpeed);
+
+        //  adjust the animation speed directly
+        animator.speed = 1 + (normalizedSpeed * 5.0f); // 
     }
 }
