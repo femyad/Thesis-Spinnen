@@ -1,0 +1,203 @@
+{
+    "generalSpider": {
+        "name": "Tarantula",
+        "prosoma": {
+            "dimensions": {
+                "width": 1,
+                "length": 1,
+                "heigth": 1,
+                "size": 1
+            },
+            "chelicerae": {
+                "fangs": true,
+                "fangsSize": 1,
+                "movement": "",
+                "dimensions": {
+                    "width": 1,
+                    "length": 1,
+                    "heigth": 1,
+                    "size": 1
+                }
+            },
+            "pedipalps": {
+                "dimensions": {
+                    "width": 1,
+                    "length": 1,
+                    "heigth": 1,
+                    "size": 1
+                }
+            },
+
+            "eyes": {
+                "numberOfEyes": 1,
+                "eyeSize": 1,
+                "eyesArrangement": ""
+            },
+
+            "legs": {
+                "legL1": {
+                    "coxa": {
+                        "width": 1,
+                        "length": 1,
+                        "heigth": 1,
+                        "size": 1,
+                        "shape": "",
+                        "idleOrientation": "",
+                        "maxOrientation": "",
+                        "minOrientation": ""
+                    }
+
+                    /*
+                    "trochanter": {
+                        "width": 1,
+                        "length": 1,
+                        "heigth": 1,
+                        "size": 1,
+                        "shape": "",
+                        "idleOrientation": "",
+                        "maxOrientation": "",
+                        "minOrientation": ""
+                    },
+                    "femur": {
+                        "width": 1,
+                        "length": 1,
+                        "heigth": 1,
+                        "size": 1,
+                        "shape": "",
+                        "idleOrientation": "",
+                        "maxOrientation": "",
+                        "minOrientation": ""
+                    },
+                    "patella": {
+                        "width": 1,
+                        "length": 1,
+                        "heigth": 1,
+                        "size": 1,
+                        "shape": "",
+                        "idleOrientation": "",
+                        "maxOrientation": "",
+                        "minOrientation": ""
+                    },
+                    "tibia": {
+                        "width": 1,
+                        "length": 1,
+                        "heigth": 1,
+                        "size": 1,
+                        "shape": "",
+                        "idleOrientation": "",
+                        "maxOrientation": "",
+                        "minOrientation": ""
+                    },
+                    "metatarsus": {
+                        "width": 1,
+                        "length": 1,
+                        "heigth": 1,
+                        "size": 1,
+                        "shape": "",
+                        "idleOrientation": "",
+                        "maxOrientation": "",
+                        "minOrientation": ""
+                    },
+                    "tarsus": {
+                        "width": 1,
+                        "length": 1,
+                        "heigth": 1,
+                        "size": 1,
+                        "shape": "",
+                        "idleOrientation": "",
+                        "maxOrientation": "",
+                        "minOrientation": ""
+                    }
+    */
+                }
+                /*   "legL2": {
+                    "coxa": {
+                        "width": 1,
+                        "length": 1,
+                        "heigth": 1,
+                        "size": 1,
+                        "shape": "",
+                        "idleOrientation": "",
+                        "maxOrientation": "",
+                        "minOrientation": ""
+                    },
+                    "trochanter": {
+                        "width": 1,
+                        "length": 1,
+                        "heigth": 1,
+                        "size": 1,
+                        "shape": "",
+                        "idleOrientation": "",
+                        "maxOrientation": "",
+                        "minOrientation": ""
+                    },
+                    "femur": {
+                        "width": 1,
+                        "length": 1,
+                        "heigth": 1,
+                        "size": 1,
+                        "shape": "",
+                        "idleOrientation": "",
+                        "maxOrientation": "",
+                        "minOrientation": ""
+                    },
+                    "patella": {
+                        "width": 1,
+                        "length": 1,
+                        "heigth": 1,
+                        "size": 1,
+                        "shape": "",
+                        "idleOrientation": "",
+                        "maxOrientation": "",
+                        "minOrientation": ""
+                    },
+                    "tibia": {
+                        "width": 1,
+                        "length": 1,
+                        "heigth": 1,
+                        "size": 1,
+                        "shape": "",
+                        "idleOrientation": "",
+                        "maxOrientation": "",
+                        "minOrientation": ""
+                    },
+                    "metatarsus": {
+                        "width": 1,
+                        "length": 1,
+                        "heigth": 1,
+                        "size": 1,
+                        "shape": "",
+                        "idleOrientation": "",
+                        "maxOrientation": "",
+                        "minOrientation": ""
+                    },
+                    "tarsus": {
+                        "width": 1,
+                        "length": 1,
+                        "heigth": 1,
+                        "size": 1,
+                        "shape": "",
+                        "idleOrientation": "",
+                        "maxOrientation": "",
+                        "minOrientation": ""
+                    }
+                }
+            */
+            }
+
+        },
+        "opisthosoma": {
+            "width": 1,
+            "length": 1,
+            "heigth": 1,
+            "size": 1,
+            "shape": "",
+            "spinnerets": {
+                "numberOfSpinnerets": 1,
+                "spinneretsSize": 1,
+                "spinneretsArrangement": ""
+            }
+        }
+
+    }
+}
