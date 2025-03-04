@@ -441,6 +441,10 @@ MonoBehaviour:
             length: 0
             height: 0
             size: 0
+        eyes:
+          numberOfEyes: 0
+          eyeSize: 0
+          eyesArrangement: 
         legs:
           legL1:
             coxa:

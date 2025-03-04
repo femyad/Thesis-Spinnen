@@ -5,7 +5,37 @@ using System.IO;
 
 public class ReadJson : MonoBehaviour
 {
+
+
+
     public TextAsset textJSON;
+
+
+    [System.Serializable]
+    public class SpiderData
+    {
+        public GeneralSpider generalSpider;
+    }
+
+    [System.Serializable]
+    public class GeneralSpider
+    {
+        public string name;
+        public Prosoma prosoma;
+
+    }
+
+    [System.Serializable]
+    public class Prosoma
+    {
+        public Dimensions dimensions;
+        public Chelicerae chelicerae;
+        public Pedipalps pedipalps;
+        public Eyes eyes;
+        public Legs legs;
+    }
+
+
 
     [System.Serializable]
     public class Dimensions
@@ -16,14 +46,7 @@ public class ReadJson : MonoBehaviour
         public float size;
     }
 
-    [System.Serializable]
-    public class Prosoma
-    {
-        public Dimensions dimensions;
-        public Chelicerae chelicerae;
-        public Pedipalps pedipalps;
-        public Legs legs;
-    }
+
 
     [System.Serializable]
     public class Chelicerae
@@ -49,6 +72,19 @@ public class ReadJson : MonoBehaviour
     }
 
     [System.Serializable]
+    public class Legs
+    {
+        public LegL1 legL1;
+    }
+
+    [System.Serializable]
+    public class LegL1
+    {
+        public Coxa coxa;
+    }
+
+
+    [System.Serializable]
     public class Coxa
     {
         public float width;
@@ -61,44 +97,18 @@ public class ReadJson : MonoBehaviour
         public string minOrientation;
     }
 
-    [System.Serializable]
-    public class  LegL1
-    {
-        public Coxa coxa;
-    }
 
-    [System.Serializable]
-    public class Legs
-    {
-        public LegL1 legL1;
-    }
 
-    [System.Serializable]
-    public class GeneralSpider
-    {
-        public string name;
-        public Prosoma prosoma;
-        
-    }
-
-    [System.Serializable]
-    public class SpiderData
-    {
-        public GeneralSpider generalSpider;
-    }
-
-    public SpiderData spiderData = new SpiderData();
+    public SpiderData spiderData = new();
 
     // Start is called before the first frame update
     void Start()
     {
         spiderData = JsonUtility.FromJson<SpiderData>(textJSON.text);
-
-       // Debug.Log("Spider Name: " + spiderData.generalSpider.name);
-       // Debug.Log("Prosoma Width: " + spiderData.generalSpider.prosoma.width);
-       // Debug.Log("Chelicerae Fangs: " + spiderData.generalSpider.chelicerae.fangs);
-      //  Debug.Log("Chelicerae Movements: " + string.Join(", ", spiderData.generalSpider.chelicerae.movement));
-       // Debug.Log("Possible Prosoma Shapes: " + string.Join(", ", spiderData.generalSpider.prosoma.shape));
+        Debug.Log("Spider Name: " + spiderData.generalSpider.name);
+        // Debug.Log("Prosoma Width: " + spiderData.generalSpider.prosoma.width);
+        // Debug.Log("Chelicerae Fangs: " + spiderData.generalSpider.chelicerae.fangs);
+        
     }
 
     // Update is called once per frame
