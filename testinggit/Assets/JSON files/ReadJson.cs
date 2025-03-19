@@ -57,6 +57,8 @@ public class ReadJson : MonoBehaviour
         public Dimensions dimensions;
     }
 
+
+
     [System.Serializable]
     public class Pedipalps
     {
@@ -81,11 +83,34 @@ public class ReadJson : MonoBehaviour
     public class LegL1
     {
         public Coxa coxa;
+        public Trochanter trochanter;
+        
+    }
+    
+    [System.Serializable]
+    public class SpecialElements
+    {
+        public string coxaType;
     }
 
+    
 
     [System.Serializable]
     public class Coxa
+    {
+        public SpecialElements specialElements;
+        public float width;
+        public float length;
+        public float height;
+        public float size;
+        public string shape;
+        public string idleOrientation;
+        public string maxOrientation;
+        public string minOrientation;
+    }
+
+    [System.Serializable]
+    public class Trochanter 
     {
         public float width;
         public float length;
@@ -96,6 +121,9 @@ public class ReadJson : MonoBehaviour
         public string maxOrientation;
         public string minOrientation;
     }
+
+
+
 
 
 
