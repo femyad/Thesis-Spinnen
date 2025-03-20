@@ -23,6 +23,10 @@ public class TranslateMovement : MonoBehaviour
     public spiderAllignment allignment;
     
     private float currentSpeed = 0;
+    public float GetCurrentSpeed()
+{
+    return currentSpeed;
+}
     private Animator animator;
     
 
