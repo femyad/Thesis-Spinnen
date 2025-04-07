@@ -1,0 +1,111 @@
+{
+  "spider": {
+    "name": "Generic Spider",
+    "prosoma": {
+      "dimensions": {
+        "width": 2.5,
+        "length": 4.0,
+        "height": 1.8,
+        "size": 1.0
+      },
+      "shape": {
+        "curvature": "oval"
+      }
+    },
+    "chelicerae": {
+      "fangs": true,
+      "movement": "orthognath",
+      "dimensions": {
+        "width": 0.5,
+        "length": 1.0,
+        "height": 0.7,
+        "size": 0.8
+      }
+    },
+    "pedipalps": {
+      "dimensions": {
+        "width": 0.6,
+        "length": 1.2,
+        "height": 0.9,
+        "size": 0.7
+      }
+    },
+    "eyes": {
+      "count": 8,
+      "size": 0.3,
+      "arrangement": [1, 2, 3, 4],
+      "anterior_posterior_row": true
+    },
+    "legs": [
+      {
+        "segment": "coxa",
+        "dimensions": {
+          "width": 0.5,
+          "length": 1.0,
+          "height": 0.3,
+          "size": 0.8
+        },
+        "shape": "cylindrical",
+        "orientation": {
+          "idle": [0, 0, 0],
+          "max_movement": [45, 0, 0],
+          "min_movement": [-45, 0, 0]
+        }
+      },
+      {
+        "segment": "trochanter",
+        "dimensions": {
+          "width": 0.4,
+          "length": 0.8,
+          "height": 0.2,
+          "size": 0.7
+        }
+      },
+      {
+        "segment": "femur",
+        "dimensions": {
+          "width": 0.6,
+          "length": 1.5,
+          "height": 0.4,
+          "size": 1.0
+        }
+      },
+      {
+        "segment": "patella",
+        "dimensions": {
+          "width": 0.5,
+          "length": 1.2,
+          "height": 0.3,
+          "size": 0.9
+        }
+      },
+      {
+        "segment": "tibia",
+        "dimensions": {
+          "width": 0.4,
+          "length": 1.3,
+          "height": 0.3,
+          "size": 0.85
+        }
+      },
+      {
+        "segment": "metatarsus",
+        "dimensions": {
+          "width": 0.3,
+          "length": 1.1,
+          "height": 0.2,
+          "size": 0.8
+        }
+      },
+      {
+        "segment": "tarsus",
+        "dimensions": {
+          "width": 0.2,
+          "length": 1.0,
+          "height": 0.2,
+          "size": 0.75
+        }
+      }
+    ]
+  }
+}
