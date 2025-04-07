@@ -24,7 +24,11 @@
       "depth": 1,
       "source": "registry",
       "dependencies": {},
+<<<<<<< HEAD
 >>>>>>> 9ae5987d7adb465430bcc73e8b3be4d89453ca52
+=======
+>>>>>>> aec4764ad14451977948d0483212a4b7b0c1cb9a
+>>>>>>> MatthiasBranch
       "url": "https://packages.unity.com"
     },
     "com.unity.collab-proxy": {
