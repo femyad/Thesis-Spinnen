@@ -501,17 +501,27 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
+<<<<<<< HEAD
   m_LocalEulerAnglesHint: {x: 39.38, y: 0, z: 0}
+=======
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+<<<<<<< HEAD
+>>>>>>> a0d877772d70b3cbd478ae7d7fe17386a947c2b3
 --- !u!4 &1270205237 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5251455596496658587, guid: 55900c51173660f47af748d41d59f7ec, type: 3}
   m_PrefabInstance: {fileID: 1443049786}
   m_PrefabAsset: {fileID: 0}
+<<<<<<< HEAD
 --- !u!4 &1416575745 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8308934794795997160, guid: e4905e8e24b5b074c953d24e5c0dc5a3, type: 3}
   m_PrefabInstance: {fileID: 5662696263107969299}
   m_PrefabAsset: {fileID: 0}
+=======
+=======
+>>>>>>> MatthiasBranch
+>>>>>>> a0d877772d70b3cbd478ae7d7fe17386a947c2b3
 --- !u!1001 &1443049786
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -522,6 +532,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 55900c51173660f47af748d41d59f7ec, type: 3}
       propertyPath: m_LocalPosition.x
+<<<<<<< HEAD
       value: 7.1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 55900c51173660f47af748d41d59f7ec, type: 3}
@@ -531,6 +542,17 @@ PrefabInstance:
     - target: {fileID: -8679921383154817045, guid: 55900c51173660f47af748d41d59f7ec, type: 3}
       propertyPath: m_LocalPosition.z
       value: 1.04
+=======
+      value: 10.731302
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 55900c51173660f47af748d41d59f7ec, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 55900c51173660f47af748d41d59f7ec, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 17.975681
+>>>>>>> MatthiasBranch
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 55900c51173660f47af748d41d59f7ec, type: 3}
       propertyPath: m_LocalRotation.w
@@ -560,6 +582,7 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+<<<<<<< HEAD
     - target: {fileID: -8610541334686797268, guid: 55900c51173660f47af748d41d59f7ec, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
@@ -696,14 +719,20 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 2e019a02e3c779c4f89c36a24d4f3468, type: 2}
+=======
+>>>>>>> MatthiasBranch
     - target: {fileID: 919132149155446097, guid: 55900c51173660f47af748d41d59f7ec, type: 3}
       propertyPath: m_Name
       value: tarantula
       objectReference: {fileID: 0}
+<<<<<<< HEAD
     - target: {fileID: 919132149155446097, guid: 55900c51173660f47af748d41d59f7ec, type: 3}
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+=======
+<<<<<<< HEAD
+>>>>>>> a0d877772d70b3cbd478ae7d7fe17386a947c2b3
     - target: {fileID: 1468020693505738230, guid: 55900c51173660f47af748d41d59f7ec, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
@@ -823,6 +852,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 55900c51173660f47af748d41d59f7ec, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1941194886}
+=======
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+>>>>>>> MatthiasBranch
   m_SourcePrefab: {fileID: 100100000, guid: 55900c51173660f47af748d41d59f7ec, type: 3}
 --- !u!1 &1541512803 stripped
 GameObject:
@@ -884,7 +919,11 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1541512803}
+<<<<<<< HEAD
   m_Enabled: 0
+=======
+  m_Enabled: 1
+>>>>>>> MatthiasBranch
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e6dbb1f3f7093bf4ea39993d1e319c80, type: 3}
   m_Name: 
@@ -901,7 +940,11 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1541512803}
+<<<<<<< HEAD
   m_Enabled: 0
+=======
+  m_Enabled: 1
+>>>>>>> MatthiasBranch
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2d972a0449258da46948e8789ed66834, type: 3}
   m_Name: 
@@ -1602,4 +1645,7 @@ SceneRoots:
   - {fileID: 1789730035}
   - {fileID: 8999047296837216305}
   - {fileID: 1443049786}
+<<<<<<< HEAD
   - {fileID: 5662696263107969299}
+=======
+>>>>>>> MatthiasBranch

@@ -6,7 +6,7 @@ public class smoothCameraFollow : MonoBehaviour
 {
     public Transform target;
     public Vector3 offset;
-    public float smoothSpeed = 0.125f; //waarom moet dit een punt zijn? ipv ,
+    public float smoothSpeed = 0.125f; 
 
     void LateUpdate ()
     {
