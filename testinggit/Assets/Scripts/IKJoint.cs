@@ -19,7 +19,8 @@ public class IKJoint : MonoBehaviour
     private Vector3 defaultPos;
     private float defaultAngle;
 
-
+    public bool UseComfort = false;
+    public float ComfortAngle = 0f;
 
     #region Properties
     //------------------------------------------------------------------------------------------------------------------------------
@@ -120,5 +121,5 @@ public class IKJoint : MonoBehaviour
         transform.localEulerAngles = Mathf.Clamp( CurAngle + angle * damping, minAngle, maxAngle ) * axis;
         //transform.Rotate( axis, angle, Space.Self );
     }
-    
+   
 }
