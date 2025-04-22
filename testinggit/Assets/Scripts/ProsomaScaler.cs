@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class ProsomaScaler : MonoBehaviour
 {
-
-
     [Header("Prosoma references")]
     public Transform prosomaRoot;
     public Transform prosoma;
@@ -13,13 +11,13 @@ public class ProsomaScaler : MonoBehaviour
     [Header("Scaling Shrinkage Compensation")]
     public Vector3 overlapCompensation = Vector3.zero;
 
-    private class LegData
+    private class PartData
     {
-        public Transform leg;
+        public Transform part;
         public Vector3 originalOffsetFromPivot;
     }
 
-    private List<LegData> legs = new List<LegData>();
+    private List<PartData> parts = new List<PartData>();
 
     void Start()
     {
@@ -30,9 +28,9 @@ public class ProsomaScaler : MonoBehaviour
 
             Vector3 offset = child.position - prosoma.position;
 
-            legs.Add(new LegData
+            parts.Add(new PartData
             {
-                leg = child,
+                part = child,
                 originalOffsetFromPivot = offset
             });
         }
@@ -46,15 +44,15 @@ public class ProsomaScaler : MonoBehaviour
             prosoma.localScale.z * (1 - overlapCompensation.z)
         );
 
-        foreach (var leg in legs)
+        foreach (var part in parts)
         {
             Vector3 scaledOffset = new Vector3(
-                leg.originalOffsetFromPivot.x * compensatedScale.x,
-                leg.originalOffsetFromPivot.y * compensatedScale.y,
-                leg.originalOffsetFromPivot.z * compensatedScale.z
+                part.originalOffsetFromPivot.x * compensatedScale.x,
+                part.originalOffsetFromPivot.y * compensatedScale.y,
+                part.originalOffsetFromPivot.z * compensatedScale.z
             );
 
-            leg.leg.position = prosoma.position + scaledOffset;
+            part.part.position = prosoma.position + scaledOffset;
         }
     }
 }
