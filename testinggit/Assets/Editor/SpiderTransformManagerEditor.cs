@@ -10,6 +10,14 @@ public class SpiderTransformManagerEditor : Editor
     private int selectedConfigIndex = 0;
     private string configFolderPath = "Assets/JSON files";
 
+    // Unique key to store selection per object
+    private string prefsKey => $"SpiderConfig_Selected_{target.GetInstanceID()}";
+
+    private void OnEnable()
+    {
+        LoadAvailableConfigs();
+    }
+
     public override void OnInspectorGUI()
     {
         DrawDefaultInspector();
@@ -34,6 +42,9 @@ public class SpiderTransformManagerEditor : Editor
 
             string filePath = Path.Combine(folderPath, manager.spiderName + ".json");
             manager.SaveTransforms(filePath);
+
+            // Refresh configs after saving
+            LoadAvailableConfigs();
         }
 
         GUILayout.Space(10);
@@ -45,10 +56,13 @@ public class SpiderTransformManagerEditor : Editor
 
         if (availableConfigs != null && availableConfigs.Length > 0)
         {
-            selectedConfigIndex = EditorGUILayout.Popup("Select Config", selectedConfigIndex, availableConfigs);
+            int newSelectedIndex = EditorGUILayout.Popup("Select Config", selectedConfigIndex, availableConfigs);
 
-            if (GUILayout.Button(" Load Selected Settings"))
+            if (newSelectedIndex != selectedConfigIndex)
             {
+                selectedConfigIndex = newSelectedIndex;
+                EditorPrefs.SetString(prefsKey, availableConfigs[selectedConfigIndex]);
+
                 string selectedFile = availableConfigs[selectedConfigIndex];
                 string fullPath = Directory.GetFiles(configFolderPath, "*.json", SearchOption.AllDirectories)
                                             .FirstOrDefault(f => f.EndsWith(selectedFile));
@@ -57,10 +71,11 @@ public class SpiderTransformManagerEditor : Editor
                 {
                     string jsonText = File.ReadAllText(fullPath);
                     manager.LoadTransforms(jsonText);
+                    Debug.Log($"Auto-loaded config: {selectedFile}");
                 }
                 else
                 {
-                    Debug.LogError(" Selected config file not found!");
+                    Debug.LogError("Selected config file not found!");
                 }
             }
         }
@@ -76,14 +91,27 @@ public class SpiderTransformManagerEditor : Editor
         {
             availableConfigs = Directory.GetFiles(configFolderPath, "*.json", SearchOption.AllDirectories)
                                         .Select(f => Path.GetFileName(f))
+                                        .OrderBy(name => name)
                                         .ToArray();
-            selectedConfigIndex = 0;
 
-            Debug.Log(" Found {availableConfigs.Length} config(s).");
+            string savedConfig = EditorPrefs.GetString(prefsKey, null);
+
+            if (!string.IsNullOrEmpty(savedConfig))
+            {
+                int index = System.Array.IndexOf(availableConfigs, savedConfig);
+                selectedConfigIndex = index >= 0 ? index : 0;
+            }
+            else
+            {
+                selectedConfigIndex = 0;
+            }
+
+            Debug.Log($" Found {availableConfigs.Length} config(s).");
         }
         else
         {
             availableConfigs = new string[0];
+            selectedConfigIndex = 0;
             Debug.LogWarning(" Config folder not found!");
         }
     }

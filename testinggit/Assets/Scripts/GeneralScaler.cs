@@ -92,10 +92,10 @@ public class GeneralScaler : MonoBehaviour
         }*/
     }
 
-    [ContextMenu("Update Leg Positions")]
+    //[ContextMenu("Update Leg Positions")]
     void LateUpdate()
     {
-/*
+
         //Prosoma
         Vector3 prosomaCompensatedScale = new Vector3(
            prosoma.localScale.x * (1 - prosomaOverlapCompensation.x),
@@ -133,7 +133,7 @@ public class GeneralScaler : MonoBehaviour
             part.part.position = abdomen.position + scaledOffset;
         }
 
-*/
+
 
 
         //Legs
@@ -153,15 +153,30 @@ public class GeneralScaler : MonoBehaviour
 
     private void PositionJoint(Transform mesh, Transform currentRoot, Transform nextRoot, float baseOverlap, JointOverlapSettings settings)
     {
+
         float currentScale = mesh.localScale.y;
-        float previousScale = previousScales.TryGetValue(mesh, out float oldScale) ? oldScale : currentScale;
 
-        float delta = currentScale - previousScale;
-        float overlap = AdjustedOverlap(baseOverlap, settings.minOverlapMultiplier, currentScale, settings.overlapExponent);
+        // Prevent zero or negative scales from breaking calculations
+        float safeScale = Mathf.Max(currentScale, 0.0001f);
+        float previousScale = previousScales.TryGetValue(mesh, out float oldScale) ? oldScale : safeScale;
 
-        nextRoot.position = currentRoot.position - currentRoot.TransformDirection(Vector3.right) * (delta + overlap);
+        float delta = safeScale - previousScale;
+        float overlap = AdjustedOverlap(baseOverlap, settings.minOverlapMultiplier, safeScale, settings.overlapExponent);
 
-        previousScales[mesh] = currentScale;
+        Vector3 offset = currentRoot.TransformDirection(Vector3.right) * (delta + overlap);
+
+        // Validate offset to avoid NaN or Infinity
+        if (float.IsNaN(offset.x) || float.IsInfinity(offset.x) ||
+            float.IsNaN(offset.y) || float.IsInfinity(offset.y) ||
+            float.IsNaN(offset.z) || float.IsInfinity(offset.z))
+        {
+            Debug.LogWarning($"Invalid offset detected for {mesh.name}, skipping position update. Offset: {offset}");
+            return;
+        }
+
+        nextRoot.position = currentRoot.position - offset;
+
+        previousScales[mesh] = safeScale;
     }
 
     private float AdjustedOverlap(float baseOverlap, float minMultiplier, float currentScale, float exponent)

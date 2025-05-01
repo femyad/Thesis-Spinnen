@@ -4,23 +4,77 @@ using UnityEngine;
 
 public class ProsomaScaler : MonoBehaviour
 {
-    [Header("Prosoma references")]
-    public Transform prosomaRoot;
-    public Transform prosoma;
+    //Prosoma references
+    private Transform prosomaRoot;
+    private Transform prosoma;
 
-    [Header("Scaling Shrinkage Compensation")]
-    public Vector3 overlapCompensation = Vector3.zero;
+    [Header("Prosoma Scaling Compensation")]
+    public Vector3 prosomaOverlapCompensation = Vector3.zero;
 
-    private class PartData
+    private class ProsomaParts
     {
         public Transform part;
         public Vector3 originalOffsetFromPivot;
     }
+    private List<ProsomaParts> prosomaParts = new List<ProsomaParts>();
 
-    private List<PartData> parts = new List<PartData>();
 
     void Start()
     {
+        InitializeProsoma();
+        SetupProsomaParts();
+    }
+
+
+
+    void LateUpdate()
+    {
+        //Prosoma
+        Vector3 prosomaCompensatedScale = new Vector3(
+           prosoma.localScale.x * (1 - prosomaOverlapCompensation.x),
+           prosoma.localScale.y * (1 - prosomaOverlapCompensation.y),
+           prosoma.localScale.z * (1 - prosomaOverlapCompensation.z)
+       );
+
+        foreach (var part in prosomaParts)
+        {
+            Vector3 scaledOffset = new Vector3(
+                part.originalOffsetFromPivot.x * prosomaCompensatedScale.x,
+                part.originalOffsetFromPivot.y * prosomaCompensatedScale.y,
+                part.originalOffsetFromPivot.z * prosomaCompensatedScale.z
+            );
+
+            part.part.position = prosoma.position + scaledOffset;
+        }
+    }
+
+    private void InitializeProsoma()
+    {
+        // Automatically find the prosomaRoot and prosoma by name
+        Transform[] allChildren = GetComponentsInChildren<Transform>(true);
+
+        foreach (Transform t in allChildren)
+        {
+            if (t.name == "prosomaRoot")
+                prosomaRoot = t;
+            else if (t.name == "prosoma")
+                prosoma = t;
+        }
+
+        if (prosomaRoot == null || prosoma == null)
+        {
+            Debug.LogError("ProsomaScaler: Required transforms not found by name.");
+        }
+    }
+
+
+    private void SetupProsomaParts()
+    {
+        if (prosomaRoot == null || prosoma == null)
+            return;
+
+        prosomaParts.Clear();
+
         foreach (Transform child in prosomaRoot)
         {
             if (child == prosoma)
@@ -28,31 +82,11 @@ public class ProsomaScaler : MonoBehaviour
 
             Vector3 offset = child.position - prosoma.position;
 
-            parts.Add(new PartData
+            prosomaParts.Add(new ProsomaParts
             {
                 part = child,
                 originalOffsetFromPivot = offset
             });
-        }
-    }
-
-    void LateUpdate()
-    {
-        Vector3 compensatedScale = new Vector3(
-            prosoma.localScale.x * (1 - overlapCompensation.x),
-            prosoma.localScale.y * (1 - overlapCompensation.y),
-            prosoma.localScale.z * (1 - overlapCompensation.z)
-        );
-
-        foreach (var part in parts)
-        {
-            Vector3 scaledOffset = new Vector3(
-                part.originalOffsetFromPivot.x * compensatedScale.x,
-                part.originalOffsetFromPivot.y * compensatedScale.y,
-                part.originalOffsetFromPivot.z * compensatedScale.z
-            );
-
-            part.part.position = prosoma.position + scaledOffset;
         }
     }
 }

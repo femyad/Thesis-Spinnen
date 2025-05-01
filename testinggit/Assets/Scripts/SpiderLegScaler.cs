@@ -1,8 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
-[ExecuteInEditMode]
+
+[ExecuteAlways]
 public class SpiderLegScaler : MonoBehaviour
 {
     [System.Serializable]
@@ -48,15 +50,14 @@ public class SpiderLegScaler : MonoBehaviour
     {
         Debug.Log("SpiderLegScaler Start called");
         InitializeLegs();
-        /*if (Application.isPlaying)
-        {
-            UpdateLegPositions();
-        }*/
+       
     }
-
-    [ContextMenu("Update Leg Positions")]
+   
+    //[ContextMenu("Update Leg Positions")]
     void LateUpdate()
     {
+       
+
         if (allLegs.Count == 0)
         {
             Debug.LogWarning("No legs initialized!");
@@ -81,7 +82,7 @@ public class SpiderLegScaler : MonoBehaviour
 
     private void PositionJoint(Transform mesh, Transform currentRoot, Transform nextRoot, float baseOverlap, JointOverlapSettings settings)
     {
-        float currentScale = mesh.localScale.y;
+        /*float currentScale = mesh.localScale.y;
         float previousScale = previousScales.TryGetValue(mesh, out float oldScale) ? oldScale : currentScale;
 
         float delta = currentScale - previousScale;
@@ -92,7 +93,33 @@ public class SpiderLegScaler : MonoBehaviour
 
         nextRoot.position = currentRoot.position - currentRoot.TransformDirection(Vector3.right) * (delta + overlap);
 
-        previousScales[mesh] = currentScale;
+        previousScales[mesh] = currentScale;*/
+
+        float currentScale = mesh.localScale.y;
+
+        // Prevent zero or negative scales from breaking calculations
+        float safeScale = Mathf.Max(currentScale, 0.0001f);
+
+        float previousScale = previousScales.TryGetValue(mesh, out float oldScale) ? oldScale : safeScale;
+
+        float delta = safeScale - previousScale;
+
+        float overlap = AdjustedOverlap(baseOverlap, settings.minOverlapMultiplier, safeScale, settings.overlapExponent);
+
+        Vector3 offset = currentRoot.TransformDirection(Vector3.right) * (delta + overlap);
+
+        // Validate offset to avoid NaN or Infinity
+        if (float.IsNaN(offset.x) || float.IsInfinity(offset.x) ||
+            float.IsNaN(offset.y) || float.IsInfinity(offset.y) ||
+            float.IsNaN(offset.z) || float.IsInfinity(offset.z))
+        {
+            Debug.LogWarning($"Invalid offset detected for {mesh.name}, skipping position update. Offset: {offset}");
+            return;
+        }
+
+        nextRoot.position = currentRoot.position - offset;
+
+        previousScales[mesh] = safeScale;
     }
 
 
@@ -167,15 +194,4 @@ public class SpiderLegScaler : MonoBehaviour
         Debug.Log($"Initialized {legCount} legs.");
     }
 
-    /*void OnValidate()
-    {
-        if (!Application.isPlaying)
-        {
-            InitializeLegs();
-            if (allLegs.Count > 0)
-            {
-                UpdateLegPositions();
-            }
-        }
-    }*/
 }
