@@ -7,9 +7,9 @@ public class IKSolverGradientDescent : MonoBehaviour
     public IKJoint[] joints;
     public GameObject target;                   //The target for the end effector
 
-    private float samplingDistance = 5f;        //The amount to update each angle in the chain when searching for the minimum
-    private float learningRate = 3f;           //The speed at which to update the final angles
-    private float distanceThreshold = 0.1f;       //The distance to target threshold to stop updating the IK chain
+    private float samplingDistance = 0.01f;        //The amount to update each angle in the chain when searching for the minimum
+    private float learningRate = 7f;           //The speed at which to update the final angles
+    private float distanceThreshold = 0.01f;       //The distance to target threshold to stop updating the IK chain
     private int maxIterations = 100;             //The maximum number of iterations to get to the target
 
     private float[] angles; //= new float[] { 26, 90, -69, 95, 0, 62, -48, 0 };   //the current angles of the joins in this chain
@@ -146,13 +146,17 @@ public class IKSolverGradientDescent : MonoBehaviour
 
             float jointError = normalized;
 
-            // Example: Trochanter prefers outward rotation (above comfort)
+            // Femur (prefers outward rotation)
             if (i == 1 && angle < joint.ComfortAngle)
             {
-                jointError *= 10f; // Boost discomfort if rotated inward
+                jointError *= 10f;
             }
 
-            // Example: Tibia prefers inward rotation
+            // Patella 
+            if (i == 2)
+            continue;
+
+            // Tarsus (same as tibia logic, prefers inward)
             if (i == 4 && angle < 0)
             {
                 jointError *= 2f;
@@ -218,8 +222,8 @@ public class IKSolverGradientDescent : MonoBehaviour
             }
 
             //Update the joint angles
-            Debug.Log( "----> FINAL RESULT" );
-            Debug.Log(curIteration) ;
+            // Debug.Log( "----> FINAL RESULT" );
+            // Debug.Log(curIteration) ;
             for ( int i = 0; i < joints.Length; i++ )
             {
                 // Debug.Log( angles[i] );
