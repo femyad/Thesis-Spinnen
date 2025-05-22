@@ -1,12 +1,44 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
 
-
-[ExecuteAlways]
-public class SpiderLegScaler : MonoBehaviour
+public class GeneralScaler : MonoBehaviour
 {
+    //Prosoma references
+    private Transform prosomaRoot;
+    private Transform prosoma;
+
+    [Header("Prosoma Scaling Compensation")]
+    public Vector3 prosomaOverlapCompensation = Vector3.zero;
+
+    private class ProsomaParts
+    {
+        public Transform part;
+        public Vector3 originalOffsetFromPivot;
+    }
+    private List<ProsomaParts> prosomaParts = new List<ProsomaParts>();
+
+
+
+    //Abdomen references
+    private Transform abdomenRoot;
+    private Transform abdomen;
+
+    [Header("Absomen Scaling Compensation")]
+    public Vector3 abdomenOverlapCompensation = Vector3.zero;
+
+    private class AbdomenParts
+    {
+        public Transform part;
+        public Vector3 originalOffsetFromPivot;
+    }
+    private List<AbdomenParts> abdomenParts = new List<AbdomenParts>();
+
+
+
+
+
+    //Leg references
     [System.Serializable]
     public class JointOverlapSettings
     {
@@ -48,26 +80,65 @@ public class SpiderLegScaler : MonoBehaviour
 
     void Start()
     {
-        Debug.Log("SpiderLegScaler Start called");
         InitializeLegs();
-       
+        InitializeAbdomen();
+        SetupAbdomenParts();
+        InitializeProsoma();
+        SetupProsomaParts();
+
+        /*if (Application.isPlaying)
+        {
+            UpdateLegPositions();
+        }*/
     }
-   
+
     //[ContextMenu("Update Leg Positions")]
     void LateUpdate()
     {
-       
 
-        if (allLegs.Count == 0)
+        //Prosoma
+        Vector3 prosomaCompensatedScale = new Vector3(
+           prosoma.localScale.x * (1 - prosomaOverlapCompensation.x),
+           prosoma.localScale.y * (1 - prosomaOverlapCompensation.y),
+           prosoma.localScale.z * (1 - prosomaOverlapCompensation.z)
+       );
+
+        foreach (var part in prosomaParts)
         {
-            Debug.LogWarning("No legs initialized!");
-            return;
-            }
+            Vector3 scaledOffset = new Vector3(
+                part.originalOffsetFromPivot.x * prosomaCompensatedScale.x,
+                part.originalOffsetFromPivot.y * prosomaCompensatedScale.y,
+                part.originalOffsetFromPivot.z * prosomaCompensatedScale.z
+            );
+
+            part.part.position = prosoma.position + scaledOffset;
+        }
 
 
+        //Abdomen
+        Vector3 abdomenCompensatedScale = new Vector3(
+            abdomen.localScale.x * (1 - abdomenOverlapCompensation.x),
+            abdomen.localScale.y * (1 - abdomenOverlapCompensation.y),
+            abdomen.localScale.z * (1 - abdomenOverlapCompensation.z)
+        );
+
+        foreach (var part in abdomenParts)
+        {
+            Vector3 scaledOffset = new Vector3(
+                part.originalOffsetFromPivot.x * abdomenCompensatedScale.x,
+                part.originalOffsetFromPivot.y * abdomenCompensatedScale.y,
+                part.originalOffsetFromPivot.z * abdomenCompensatedScale.z
+            );
+
+            part.part.position = abdomen.position + scaledOffset;
+        }
+
+
+
+
+        //Legs
         foreach (var leg in allLegs)
         {
-            Debug.Log($"Updating leg with overlap set: {leg.overlap}");
             var o = leg.overlap;
 
             PositionJoint(leg.coxa, leg.coxaRoot, leg.trochanterRoot, o.overlapCoxaToTrochanter, o);
@@ -82,28 +153,14 @@ public class SpiderLegScaler : MonoBehaviour
 
     private void PositionJoint(Transform mesh, Transform currentRoot, Transform nextRoot, float baseOverlap, JointOverlapSettings settings)
     {
-        /*float currentScale = mesh.localScale.y;
-        float previousScale = previousScales.TryGetValue(mesh, out float oldScale) ? oldScale : currentScale;
-
-        float delta = currentScale - previousScale;
-        float overlap = AdjustedOverlap(baseOverlap, settings.minOverlapMultiplier, currentScale, settings.overlapExponent);
-
-        Debug.Log($"Positioning joint {mesh.name}: currentScale={currentScale}, delta={delta}, overlap={overlap}");
-
-
-        nextRoot.position = currentRoot.position - currentRoot.TransformDirection(Vector3.right) * (delta + overlap);
-
-        previousScales[mesh] = currentScale;*/
 
         float currentScale = mesh.localScale.y;
 
         // Prevent zero or negative scales from breaking calculations
         float safeScale = Mathf.Max(currentScale, 0.0001f);
-
         float previousScale = previousScales.TryGetValue(mesh, out float oldScale) ? oldScale : safeScale;
 
         float delta = safeScale - previousScale;
-
         float overlap = AdjustedOverlap(baseOverlap, settings.minOverlapMultiplier, safeScale, settings.overlapExponent);
 
         Vector3 offset = currentRoot.TransformDirection(Vector3.right) * (delta + overlap);
@@ -122,9 +179,6 @@ public class SpiderLegScaler : MonoBehaviour
         previousScales[mesh] = safeScale;
     }
 
-
-
-
     private float AdjustedOverlap(float baseOverlap, float minMultiplier, float currentScale, float exponent)
     {
         float nonlinearScale = Mathf.Pow(currentScale, exponent);
@@ -134,7 +188,6 @@ public class SpiderLegScaler : MonoBehaviour
 
     private void InitializeLegs()
     {
-        Debug.Log("Initializing Legs...");
         allLegs.Clear();
 
         Transform prosomaRoot = transform.Find("prosomaRoot");
@@ -143,7 +196,6 @@ public class SpiderLegScaler : MonoBehaviour
             Debug.LogError("Could not find 'prosomaRoot' under " + transform.name);
             return;
         }
-        int legCount = 0;
 
         foreach (Transform child in prosomaRoot)
         {
@@ -189,9 +241,88 @@ public class SpiderLegScaler : MonoBehaviour
             }
 
             allLegs.Add(chain);
-            legCount++;
         }
-        Debug.Log($"Initialized {legCount} legs.");
     }
 
+    private void InitializeAbdomen() 
+    {
+        // Automatically find the abdomenRoot and abdomen by name
+        Transform[] allChildren = GetComponentsInChildren<Transform>(true);
+
+        foreach (Transform t in allChildren)
+        {
+            if (t.name == "abdomenRoot")
+                abdomenRoot = t;
+            else if (t.name == "abdomen")
+                abdomen = t;
+        }
+
+        if (abdomenRoot == null || abdomen == null)
+        {
+            Debug.LogError("AbdomenScaler: Required transforms not found by name.");
+        }
+    }
+
+    private void InitializeProsoma()
+    {
+        // Automatically find the prosomaRoot and prosoma by name
+        Transform[] allChildren = GetComponentsInChildren<Transform>(true);
+
+        foreach (Transform t in allChildren)
+        {
+            if (t.name == "prosomaRoot")
+                prosomaRoot = t;
+            else if (t.name == "prosoma")
+                prosoma = t;
+        }
+
+        if (prosomaRoot == null || prosoma == null)
+        {
+            Debug.LogError("ProsomaScaler: Required transforms not found by name.");
+        }
+    }
+
+    private void SetupAbdomenParts()
+    {
+        if (abdomenRoot == null || abdomen == null)
+            return;
+
+        abdomenParts.Clear(); // optional if re-initializing
+
+        foreach (Transform child in abdomenRoot)
+        {
+            if (child == abdomen)
+                continue;
+
+            Vector3 offset = child.position - abdomen.position;
+
+            abdomenParts.Add(new AbdomenParts
+            {
+                part = child,
+                originalOffsetFromPivot = offset
+            });
+        }
+    }
+
+    private void SetupProsomaParts()
+    {
+        if (prosomaRoot == null || prosoma == null)
+            return;
+
+        prosomaParts.Clear();
+
+        foreach (Transform child in prosomaRoot)
+        {
+            if (child == prosoma)
+                continue;
+
+            Vector3 offset = child.position - prosoma.position;
+
+            prosomaParts.Add(new ProsomaParts
+            {
+                part = child,
+                originalOffsetFromPivot = offset
+            });
+        }
+    }
 }
