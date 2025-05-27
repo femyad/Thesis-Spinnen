@@ -13,6 +13,11 @@ public class SpiderSegmentCustomizer : MonoBehaviour
     private Dictionary<string, GameObject> legRoots = new();
     private List<Toggle> legToggles = new();
 
+    public TMP_Text xValueText;
+    public TMP_Text yValueText;
+    public TMP_Text zValueText;
+
+
     private Dictionary<string, Color> colorMap = new()
     {
         {"Color_Red", Color.red},
@@ -25,11 +30,16 @@ public class SpiderSegmentCustomizer : MonoBehaviour
     void Start()
     {
         // Auto-detect leg roots
-        foreach (Transform child in spiderRoot.transform)
+        Transform[] all = spiderRoot.GetComponentsInChildren<Transform>(true);
+        foreach (Transform child in all)
         {
             if (child.name.StartsWith("Leg"))
+            {
                 legRoots[child.name] = child.gameObject;
+                Debug.Log($"Found leg: {child.name}");
+            }
         }
+
 
         // Auto-detect toggles
         Toggle[] allToggles = GetComponentsInChildren<Toggle>(true);
@@ -38,6 +48,12 @@ public class SpiderSegmentCustomizer : MonoBehaviour
             if (toggle.name.StartsWith("Toggle_Leg"))
                 legToggles.Add(toggle);
         }
+        foreach (var toggle in legToggles)
+        {
+            toggle.isOn = false; // Uncheck all by default
+        }
+
+
 
         // Auto-detect color buttons
         foreach (var entry in colorMap)
@@ -59,7 +75,17 @@ public class SpiderSegmentCustomizer : MonoBehaviour
             }
         }
 
+        // Set default segment
         SetSegment("patella");
+
+        // Select one leg by default so GetSelectedLegSegments() returns something
+        Toggle firstLeg = legToggles.Find(t => t != null);
+        if (firstLeg != null)
+            firstLeg.isOn = true;
+
+        // Manually update sliders after toggling (in case SetValueWithoutNotify didn’t get called)
+        SetSegment("patella");
+
     }
 
     public void SetSegment(string name)
@@ -72,10 +98,19 @@ public class SpiderSegmentCustomizer : MonoBehaviour
         if (segments.Count > 0)
         {
             var scale = segments[0].transform.localScale;
+            // Update sliders (without triggering change)
             xSlider.SetValueWithoutNotify(scale.x);
             ySlider.SetValueWithoutNotify(scale.y);
             zSlider.SetValueWithoutNotify(scale.z);
+
+            // Update text displays too
+            xValueText.text = scale.x.ToString("F2");
+            yValueText.text = scale.y.ToString("F2");
+            zValueText.text = scale.z.ToString("F2");
         }
+
+
+
     }
 
     public void SetColor(Color color)
@@ -89,9 +124,24 @@ public class SpiderSegmentCustomizer : MonoBehaviour
         }
     }
 
-    public void SetXScale(float value) => ApplyScale(value, "x");
-    public void SetYScale(float value) => ApplyScale(value, "y");
-    public void SetZScale(float value) => ApplyScale(value, "z");
+    public void SetXScale(float value)
+    {
+        xValueText.text = value.ToString("F2");
+        ApplyScale(value, "x");
+    }
+
+    public void SetYScale(float value)
+    {
+        yValueText.text = value.ToString("F2");
+        ApplyScale(value, "y");
+    }
+
+    public void SetZScale(float value)
+    {
+        zValueText.text = value.ToString("F2");
+        ApplyScale(value, "z");
+    }
+
 
     private void ApplyScale(float value, string axis)
     {
@@ -136,4 +186,23 @@ public class SpiderSegmentCustomizer : MonoBehaviour
         }
         return null;
     }
+
+
+    public void SelectAllLegs()
+    {
+        foreach (var toggle in legToggles)
+            toggle.isOn = true;
+
+        // Optionally refresh sliders again
+        SetSegment(currentSegmentName);
+    }
+
+    public void DeselectAllLegs()
+    {
+        foreach (var toggle in legToggles)
+            toggle.isOn = false;
+    }
+
+
+
 }
