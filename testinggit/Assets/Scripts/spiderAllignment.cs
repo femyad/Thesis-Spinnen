@@ -2,37 +2,37 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class spiderAllignment : MonoBehaviour
+public class SpiderAllignment : MonoBehaviour
 {
-    public float raycastDistance = 200f; // Distance to cast ray downwards
-    public float heightOffset = 100f; 
-    public float rotationSpeed = 5.0f; // Speed at which the spider rotates to align with the terrain
+    [Header("Alignment Settings")]
+    public float raycastDistance = 5f;          
+    public float heightOffset = 1.0f;           
+    public float positionLerpSpeed = 5.0f;      
+    public float rotationLerpSpeed = 5.0f;     
 
-   
-        void Update()
+    void Update()
     {
-        AlignWithTerrain(); 
+        AlignWithTerrain();
     }
 
     void AlignWithTerrain()
     {
-        // Cast a ray from the spider's position downwards to find the terrain height
-        Ray ray = new Ray(transform.position +  Vector3.up * heightOffset, Vector3.down);
+       
+        Vector3 rayOrigin = transform.position + Vector3.up * raycastDistance;
+        Ray ray = new Ray(rayOrigin, Vector3.down);
         RaycastHit hit;
-        
-        
-        // Perform the raycast and check if it hits anything
-        if (Physics.Raycast(ray, out hit, raycastDistance))
+
+        if (Physics.Raycast(ray, out hit, raycastDistance * 2f))
         {
-             Debug.DrawLine(transform.position + Vector3.up * heightOffset * 100, hit.point, Color.red, 0.1f);//vaste positie proberen
+            // Debug.DrawLine(rayOrigin, hit.point, Color.red);
 
-             // Adjust the spider's position to match the height of the terrain
-            Vector3 targetPosition = new Vector3(transform.position.x, hit.point.y, transform.position.z);
-            transform.position = targetPosition; // bekijken
+            // Target pos = hit point plus offset, Vector3.up was hit.normal, voor future ln 30
+            Vector3 targetPosition = hit.point + Vector3.up * heightOffset;
+            transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * positionLerpSpeed);
 
-            // Align the spider's rotation with the terrain's normal
+            // Calculate rotation aligning up with the terrain normal
             Quaternion targetRotation = Quaternion.FromToRotation(transform.up, hit.normal) * transform.rotation;
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotationLerpSpeed);
         }
     }
 }

@@ -66,7 +66,8 @@ public class TargetStepper : MonoBehaviour
 
     private IEnumerator StepToTargetCR(){
          float time = 0;
-         Vector3 targetPos = legTarget.position;
+        //  Vector3 targetPos = legTarget.position;
+        //in while, target op terrain, raycast beide richtingen.
          Vector3 startPos = transform.position;
             while (time < 1f)
             {
