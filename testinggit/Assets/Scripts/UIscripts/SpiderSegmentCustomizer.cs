@@ -18,6 +18,30 @@ public class SpiderSegmentCustomizer : MonoBehaviour
     public TMP_Text zValueText;
 
 
+    public List<Material> spiderSkinMaterials = new();
+
+    [HideInInspector]
+    public Toggle applyToAllSegmentsToggle;
+
+
+    [Header("UI Panels")]
+    public GameObject panelLegs;
+    public GameObject panelAbdomen;
+    public GameObject panelProsoma;
+    public GameObject panelBaseModel;
+
+    [Header("Tab Buttons")]
+    public Button buttonLegs;
+    public Button buttonAbdomen;
+    public Button buttonProsoma;
+    public Button buttonBaseModel;
+
+    [Header("Tab Colors")]
+    public Color activeTabColor = Color.white;
+    public Color inactiveTabColor = Color.gray;
+
+
+
     private Dictionary<string, Color> colorMap = new()
     {
         {"Color_Red", Color.red},
@@ -75,8 +99,19 @@ public class SpiderSegmentCustomizer : MonoBehaviour
             }
         }
 
-        // Set default segment
-        SetSegment("patella");
+        //Auto detect Apply to All Segments toggle
+        GameObject toggleObj = GameObject.Find("Toggle_ApplyToAllSegments");
+        if (toggleObj != null)
+        {
+            applyToAllSegmentsToggle = toggleObj.GetComponent<Toggle>();
+            Debug.Log("Auto-hooked ApplyToAllSegments toggle.");
+        }
+        else
+        {
+            Debug.LogWarning("Toggle_ApplyToAllSegments not found!");
+        }
+
+
 
         // Select one leg by default so GetSelectedLegSegments() returns something
         Toggle firstLeg = legToggles.Find(t => t != null);
@@ -85,6 +120,42 @@ public class SpiderSegmentCustomizer : MonoBehaviour
 
         // Manually update sliders after toggling (in case SetValueWithoutNotify didn’t get called)
         SetSegment("patella");
+
+
+        //for the skin materials
+        for (int i = 0; i < spiderSkinMaterials.Count; i++)
+        {
+            Material mat = spiderSkinMaterials[i];
+            if (mat == null)
+            {
+                Debug.LogWarning($"Material at index {i} is null!");
+                continue;
+            }
+
+            string btnName = "Button_" + mat.name.Replace("Mat_", "");
+            GameObject btn = GameObject.Find(btnName);
+            int index = i;
+
+            if (btn != null)
+            {
+                btn.GetComponent<Button>().onClick.AddListener(() =>
+                {
+                    Debug.Log($"Button '{btnName}' clicked! Applying material: {spiderSkinMaterials[index].name}");
+                    SetMaterial(spiderSkinMaterials[index]);
+                });
+
+                Debug.Log($"Linked {btnName} to material {mat.name}");
+            }
+            else
+            {
+                Debug.LogWarning($"Button '{btnName}' not found for material '{mat.name}'");
+            }
+        }
+
+        //for activating different panels settings
+        ShowPanel("legs");
+
+
 
     }
 
@@ -115,14 +186,18 @@ public class SpiderSegmentCustomizer : MonoBehaviour
 
     public void SetColor(Color color)
     {
-        var segments = GetSelectedLegSegments();
-        foreach (var obj in segments)
+        var targets = applyToAllSegmentsToggle.isOn
+            ? GetAllSegmentsOfSelectedLegs()
+            : GetSelectedLegSegments();
+
+        foreach (var obj in targets)
         {
             var renderer = obj.GetComponent<Renderer>();
             if (renderer != null)
                 renderer.material.color = color;
         }
     }
+
 
     public void SetXScale(float value)
     {
@@ -203,6 +278,64 @@ public class SpiderSegmentCustomizer : MonoBehaviour
             toggle.isOn = false;
     }
 
+    public void SetMaterial(Material mat)
+    {
+        var targets = applyToAllSegmentsToggle.isOn
+            ? GetAllSegmentsOfSelectedLegs()
+            : GetSelectedLegSegments();
+
+        foreach (var obj in targets)
+        {
+            var renderer = obj.GetComponent<Renderer>();
+            if (renderer != null)
+                renderer.material = mat;
+        }
+    }
+
+    private List<GameObject> GetAllSegmentsOfSelectedLegs()
+    {
+        var result = new List<GameObject>();
+
+        foreach (var toggle in legToggles)
+        {
+            if (!toggle.isOn) continue;
+
+            string legName = toggle.name.Replace("Toggle_", "");
+            if (!legRoots.TryGetValue(legName, out GameObject legRoot)) continue;
+
+            foreach (Transform segment in legRoot.GetComponentsInChildren<Transform>(true))
+            {
+                if (segment.GetComponent<Renderer>() != null)
+                    result.Add(segment.gameObject);
+            }
+        }
+
+        return result;
+    }
+
+    public void ShowPanel(string name)
+    {
+        // Toggle panel visibility
+        panelLegs.SetActive(name == "legs");
+        panelAbdomen.SetActive(name == "abdomen");
+        panelProsoma.SetActive(name == "prosoma");
+        panelBaseModel.SetActive(name == "baseModel");
+
+        // Update tab colors
+        UpdateTabColor(buttonLegs, name == "legs");
+        UpdateTabColor(buttonAbdomen, name == "abdomen");
+        UpdateTabColor(buttonProsoma, name == "prosoma");
+        UpdateTabColor(buttonBaseModel, name == "baseModel");
+    }
+
+    private void UpdateTabColor(Button btn, bool isActive)
+    {
+        var image = btn.GetComponent<Image>();
+        if (image != null)
+        {
+            image.color = isActive ? activeTabColor : inactiveTabColor;
+        }
+    }
 
 
 }
