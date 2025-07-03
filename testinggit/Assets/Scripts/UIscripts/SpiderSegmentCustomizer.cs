@@ -29,16 +29,39 @@ public class SpiderSegmentCustomizer : MonoBehaviour
     public GameObject panelAbdomen;
     public GameObject panelProsoma;
     public GameObject panelBaseModel;
+    public GameObject panelFinishing;
 
     [Header("Tab Buttons")]
     public Button buttonLegs;
     public Button buttonAbdomen;
     public Button buttonProsoma;
     public Button buttonBaseModel;
+    public Button buttonFinishing;
+
+
 
     [Header("Tab Colors")]
     public Color activeTabColor = Color.white;
     public Color inactiveTabColor = Color.gray;
+
+    [Header("Segment Buttons")]
+    public List<Button> segmentButtons = new List<Button>();
+
+    [Header("Segment Colors")]
+    public Color activeSegmentColor = Color.white;
+    public Color inactiveSegmentColor = Color.gray;
+
+
+    [Header("Leg Checklist Colors")]
+    public Color activeLegColor = Color.green;
+    public Color inactiveLegColor = Color.white;
+
+    [Header("Cinemachine Virtual Cameras")]
+    public Cinemachine.CinemachineVirtualCamera cmBaseModel;
+    public Cinemachine.CinemachineVirtualCamera cmLegs;
+    public Cinemachine.CinemachineVirtualCamera cmAbdomen;
+    public Cinemachine.CinemachineVirtualCamera cmProsoma;
+    public Cinemachine.CinemachineVirtualCamera cmFinishing;
 
 
 
@@ -76,8 +99,15 @@ public class SpiderSegmentCustomizer : MonoBehaviour
         {
             toggle.isOn = false; // Uncheck all by default
         }
-
-
+        foreach (var toggle in legToggles)
+        {
+            if (toggle != null)
+            {
+                toggle.onValueChanged.AddListener(delegate { UpdateLegHighlights(); });
+            }
+        }
+        // set highlights correctly on start too
+        UpdateLegHighlights();
 
         // Auto-detect color buttons
         foreach (var entry in colorMap)
@@ -119,7 +149,7 @@ public class SpiderSegmentCustomizer : MonoBehaviour
             firstLeg.isOn = true;
 
         // Manually update sliders after toggling (in case SetValueWithoutNotify didn’t get called)
-        SetSegment("patella");
+        SetSegment("coxa");
 
 
         //for the skin materials
@@ -153,7 +183,7 @@ public class SpiderSegmentCustomizer : MonoBehaviour
         }
 
         //for activating different panels settings
-        ShowPanel("legs");
+        ShowPanel("baseModel");
 
 
 
@@ -161,8 +191,24 @@ public class SpiderSegmentCustomizer : MonoBehaviour
 
     public void SetSegment(string name)
     {
+
+
+        foreach (var btn in segmentButtons)
+        {
+            if (btn == null) continue;
+
+            string btnName = btn.name.ToLower();
+
+            // segment buttons are usually named like "coxa_button"
+            bool isActive = btnName.StartsWith(name.ToLower());
+
+            var img = btn.GetComponent<Image>();
+            if (img != null)
+                img.color = isActive ? activeSegmentColor : inactiveSegmentColor;
+        }
+
+
         currentSegmentName = name;
-        currentSegmentLabel.text = char.ToUpper(name[0]) + name.Substring(1);
 
         // Set sliders to the scale of first matching segment
         var segments = GetSelectedLegSegments();
@@ -270,12 +316,16 @@ public class SpiderSegmentCustomizer : MonoBehaviour
 
         // Optionally refresh sliders again
         SetSegment(currentSegmentName);
+        UpdateLegHighlights();
+
     }
 
     public void DeselectAllLegs()
     {
         foreach (var toggle in legToggles)
             toggle.isOn = false;
+        UpdateLegHighlights();
+
     }
 
     public void SetMaterial(Material mat)
@@ -316,16 +366,25 @@ public class SpiderSegmentCustomizer : MonoBehaviour
     public void ShowPanel(string name)
     {
         // Toggle panel visibility
+        panelBaseModel.SetActive(name == "baseModel");
         panelLegs.SetActive(name == "legs");
         panelAbdomen.SetActive(name == "abdomen");
         panelProsoma.SetActive(name == "prosoma");
-        panelBaseModel.SetActive(name == "baseModel");
+        panelFinishing.SetActive(name == "finishing");
 
         // Update tab colors
+        UpdateTabColor(buttonBaseModel, name == "baseModel");
         UpdateTabColor(buttonLegs, name == "legs");
         UpdateTabColor(buttonAbdomen, name == "abdomen");
         UpdateTabColor(buttonProsoma, name == "prosoma");
-        UpdateTabColor(buttonBaseModel, name == "baseModel");
+        UpdateTabColor(buttonFinishing, name == "finishing");
+       
+        if (name == "legs")
+        {
+            SetSegment("coxa");  // auto-pick the coxa segment
+        }
+        SetCameraView(name);
+
     }
 
     private void UpdateTabColor(Button btn, bool isActive)
@@ -335,6 +394,28 @@ public class SpiderSegmentCustomizer : MonoBehaviour
         {
             image.color = isActive ? activeTabColor : inactiveTabColor;
         }
+    }
+
+    public void UpdateLegHighlights()
+    {
+        foreach (var toggle in legToggles)
+        {
+            if (toggle == null) continue;
+
+            if (toggle.targetGraphic != null)
+            {
+                toggle.targetGraphic.color = toggle.isOn ? activeLegColor : inactiveLegColor;
+            }
+        }
+    }
+
+    public void SetCameraView(string view)
+    {
+        cmBaseModel.Priority = (view == "baseModel" ? 10 : 0);
+        cmLegs.Priority = (view == "legs") ? 10 : 0;
+        cmAbdomen.Priority = (view == "abdomen") ? 10 : 0;
+        cmProsoma.Priority = (view == "prosoma") ? 10 : 0;
+        cmFinishing.Priority = (view == "finishing") ? 10 : 0;
     }
 
 
