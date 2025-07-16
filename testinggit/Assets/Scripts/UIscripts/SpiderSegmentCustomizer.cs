@@ -13,6 +13,58 @@ public class SpiderSegmentCustomizer : MonoBehaviour
     private Dictionary<string, GameObject> legRoots = new();
     private List<Toggle> legToggles = new();
 
+    public TMP_Text xValueText;
+    public TMP_Text yValueText;
+    public TMP_Text zValueText;
+
+
+    public List<Material> spiderSkinMaterials = new();
+
+    [HideInInspector]
+    public Toggle applyToAllSegmentsToggle;
+
+
+    [Header("UI Panels")]
+    public GameObject panelLegs;
+    public GameObject panelAbdomen;
+    public GameObject panelProsoma;
+    public GameObject panelBaseModel;
+    public GameObject panelFinishing;
+
+    [Header("Tab Buttons")]
+    public Button buttonLegs;
+    public Button buttonAbdomen;
+    public Button buttonProsoma;
+    public Button buttonBaseModel;
+    public Button buttonFinishing;
+
+
+
+    [Header("Tab Colors")]
+    public Color activeTabColor = Color.white;
+    public Color inactiveTabColor = Color.gray;
+
+    [Header("Segment Buttons")]
+    public List<Button> segmentButtons = new List<Button>();
+
+    [Header("Segment Colors")]
+    public Color activeSegmentColor = Color.white;
+    public Color inactiveSegmentColor = Color.gray;
+
+
+    [Header("Leg Checklist Colors")]
+    public Color activeLegColor = Color.green;
+    public Color inactiveLegColor = Color.white;
+
+    [Header("Cinemachine Virtual Cameras")]
+    public Cinemachine.CinemachineVirtualCamera cmBaseModel;
+    public Cinemachine.CinemachineVirtualCamera cmLegs;
+    public Cinemachine.CinemachineVirtualCamera cmAbdomen;
+    public Cinemachine.CinemachineVirtualCamera cmProsoma;
+    public Cinemachine.CinemachineVirtualCamera cmFinishing;
+
+
+
     private Dictionary<string, Color> colorMap = new()
     {
         {"Color_Red", Color.red},
@@ -25,11 +77,16 @@ public class SpiderSegmentCustomizer : MonoBehaviour
     void Start()
     {
         // Auto-detect leg roots
-        foreach (Transform child in spiderRoot.transform)
+        Transform[] all = spiderRoot.GetComponentsInChildren<Transform>(true);
+        foreach (Transform child in all)
         {
             if (child.name.StartsWith("Leg"))
+            {
                 legRoots[child.name] = child.gameObject;
+                Debug.Log($"Found leg: {child.name}");
+            }
         }
+
 
         // Auto-detect toggles
         Toggle[] allToggles = GetComponentsInChildren<Toggle>(true);
@@ -38,6 +95,19 @@ public class SpiderSegmentCustomizer : MonoBehaviour
             if (toggle.name.StartsWith("Toggle_Leg"))
                 legToggles.Add(toggle);
         }
+        foreach (var toggle in legToggles)
+        {
+            toggle.isOn = false; // Uncheck all by default
+        }
+        foreach (var toggle in legToggles)
+        {
+            if (toggle != null)
+            {
+                toggle.onValueChanged.AddListener(delegate { UpdateLegHighlights(); });
+            }
+        }
+        // set highlights correctly on start too
+        UpdateLegHighlights();
 
         // Auto-detect color buttons
         foreach (var entry in colorMap)
@@ -59,29 +129,114 @@ public class SpiderSegmentCustomizer : MonoBehaviour
             }
         }
 
-        SetSegment("patella");
+        //Auto detect Apply to All Segments toggle
+        GameObject toggleObj = GameObject.Find("Toggle_ApplyToAllSegments");
+        if (toggleObj != null)
+        {
+            applyToAllSegmentsToggle = toggleObj.GetComponent<Toggle>();
+            Debug.Log("Auto-hooked ApplyToAllSegments toggle.");
+        }
+        else
+        {
+            Debug.LogWarning("Toggle_ApplyToAllSegments not found!");
+        }
+
+
+
+        // Select one leg by default so GetSelectedLegSegments() returns something
+        Toggle firstLeg = legToggles.Find(t => t != null);
+        if (firstLeg != null)
+            firstLeg.isOn = true;
+
+        // Manually update sliders after toggling (in case SetValueWithoutNotify didn’t get called)
+        SetSegment("coxa");
+
+
+        //for the skin materials
+        for (int i = 0; i < spiderSkinMaterials.Count; i++)
+        {
+            Material mat = spiderSkinMaterials[i];
+            if (mat == null)
+            {
+                Debug.LogWarning($"Material at index {i} is null!");
+                continue;
+            }
+
+            string btnName = "Button_" + mat.name.Replace("Mat_", "");
+            GameObject btn = GameObject.Find(btnName);
+            int index = i;
+
+            if (btn != null)
+            {
+                btn.GetComponent<Button>().onClick.AddListener(() =>
+                {
+                    Debug.Log($"Button '{btnName}' clicked! Applying material: {spiderSkinMaterials[index].name}");
+                    SetMaterial(spiderSkinMaterials[index]);
+                });
+
+                Debug.Log($"Linked {btnName} to material {mat.name}");
+            }
+            else
+            {
+                Debug.LogWarning($"Button '{btnName}' not found for material '{mat.name}'");
+            }
+        }
+
+        //for activating different panels settings
+        ShowPanel("baseModel");
+
+
+
     }
 
     public void SetSegment(string name)
     {
+
+
+        foreach (var btn in segmentButtons)
+        {
+            if (btn == null) continue;
+
+            string btnName = btn.name.ToLower();
+
+            // segment buttons are usually named like "coxa_button"
+            bool isActive = btnName.StartsWith(name.ToLower());
+
+            var img = btn.GetComponent<Image>();
+            if (img != null)
+                img.color = isActive ? activeSegmentColor : inactiveSegmentColor;
+        }
+
+
         currentSegmentName = name;
-        currentSegmentLabel.text = char.ToUpper(name[0]) + name.Substring(1);
 
         // Set sliders to the scale of first matching segment
         var segments = GetSelectedLegSegments();
         if (segments.Count > 0)
         {
             var scale = segments[0].transform.localScale;
+            // Update sliders (without triggering change)
             xSlider.SetValueWithoutNotify(scale.x);
             ySlider.SetValueWithoutNotify(scale.y);
             zSlider.SetValueWithoutNotify(scale.z);
+
+            // Update text displays too
+            xValueText.text = scale.x.ToString("F2");
+            yValueText.text = scale.y.ToString("F2");
+            zValueText.text = scale.z.ToString("F2");
         }
+
+
+
     }
 
     public void SetColor(Color color)
     {
-        var segments = GetSelectedLegSegments();
-        foreach (var obj in segments)
+        var targets = applyToAllSegmentsToggle.isOn
+            ? GetAllSegmentsOfSelectedLegs()
+            : GetSelectedLegSegments();
+
+        foreach (var obj in targets)
         {
             var renderer = obj.GetComponent<Renderer>();
             if (renderer != null)
@@ -89,9 +244,25 @@ public class SpiderSegmentCustomizer : MonoBehaviour
         }
     }
 
-    public void SetXScale(float value) => ApplyScale(value, "x");
-    public void SetYScale(float value) => ApplyScale(value, "y");
-    public void SetZScale(float value) => ApplyScale(value, "z");
+
+    public void SetXScale(float value)
+    {
+        xValueText.text = value.ToString("F2");
+        ApplyScale(value, "x");
+    }
+
+    public void SetYScale(float value)
+    {
+        yValueText.text = value.ToString("F2");
+        ApplyScale(value, "y");
+    }
+
+    public void SetZScale(float value)
+    {
+        zValueText.text = value.ToString("F2");
+        ApplyScale(value, "z");
+    }
+
 
     private void ApplyScale(float value, string axis)
     {
@@ -136,4 +307,116 @@ public class SpiderSegmentCustomizer : MonoBehaviour
         }
         return null;
     }
+
+
+    public void SelectAllLegs()
+    {
+        foreach (var toggle in legToggles)
+            toggle.isOn = true;
+
+        // Optionally refresh sliders again
+        SetSegment(currentSegmentName);
+        UpdateLegHighlights();
+
+    }
+
+    public void DeselectAllLegs()
+    {
+        foreach (var toggle in legToggles)
+            toggle.isOn = false;
+        UpdateLegHighlights();
+
+    }
+
+    public void SetMaterial(Material mat)
+    {
+        var targets = applyToAllSegmentsToggle.isOn
+            ? GetAllSegmentsOfSelectedLegs()
+            : GetSelectedLegSegments();
+
+        foreach (var obj in targets)
+        {
+            var renderer = obj.GetComponent<Renderer>();
+            if (renderer != null)
+                renderer.material = mat;
+        }
+    }
+
+    private List<GameObject> GetAllSegmentsOfSelectedLegs()
+    {
+        var result = new List<GameObject>();
+
+        foreach (var toggle in legToggles)
+        {
+            if (!toggle.isOn) continue;
+
+            string legName = toggle.name.Replace("Toggle_", "");
+            if (!legRoots.TryGetValue(legName, out GameObject legRoot)) continue;
+
+            foreach (Transform segment in legRoot.GetComponentsInChildren<Transform>(true))
+            {
+                if (segment.GetComponent<Renderer>() != null)
+                    result.Add(segment.gameObject);
+            }
+        }
+
+        return result;
+    }
+
+    public void ShowPanel(string name)
+    {
+        // Toggle panel visibility
+        panelBaseModel.SetActive(name == "baseModel");
+        panelLegs.SetActive(name == "legs");
+        panelAbdomen.SetActive(name == "abdomen");
+        panelProsoma.SetActive(name == "prosoma");
+        panelFinishing.SetActive(name == "finishing");
+
+        // Update tab colors
+        UpdateTabColor(buttonBaseModel, name == "baseModel");
+        UpdateTabColor(buttonLegs, name == "legs");
+        UpdateTabColor(buttonAbdomen, name == "abdomen");
+        UpdateTabColor(buttonProsoma, name == "prosoma");
+        UpdateTabColor(buttonFinishing, name == "finishing");
+       
+        if (name == "legs")
+        {
+            SetSegment("coxa");  // auto-pick the coxa segment
+        }
+        SetCameraView(name);
+
+    }
+
+    private void UpdateTabColor(Button btn, bool isActive)
+    {
+        var image = btn.GetComponent<Image>();
+        if (image != null)
+        {
+            image.color = isActive ? activeTabColor : inactiveTabColor;
+        }
+    }
+
+    public void UpdateLegHighlights()
+    {
+        foreach (var toggle in legToggles)
+        {
+            if (toggle == null) continue;
+
+            if (toggle.targetGraphic != null)
+            {
+                toggle.targetGraphic.color = toggle.isOn ? activeLegColor : inactiveLegColor;
+            }
+        }
+    }
+
+    public void SetCameraView(string view)
+    {
+        cmBaseModel.Priority = (view == "baseModel" ? 10 : 0);
+        cmLegs.Priority = (view == "legs") ? 10 : 0;
+        cmAbdomen.Priority = (view == "abdomen") ? 10 : 0;
+        cmProsoma.Priority = (view == "prosoma") ? 10 : 0;
+        cmFinishing.Priority = (view == "finishing") ? 10 : 0;
+    }
+
+
 }
