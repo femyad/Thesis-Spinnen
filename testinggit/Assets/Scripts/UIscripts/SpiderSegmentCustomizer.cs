@@ -2,6 +2,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Drawing;
+using Unity.VisualScripting;
+using Color = UnityEngine.Color;
+
 
 public class SpiderSegmentCustomizer : MonoBehaviour
 {
@@ -12,6 +16,11 @@ public class SpiderSegmentCustomizer : MonoBehaviour
     private string currentSegmentName = "patella";
     private Dictionary<string, GameObject> legRoots = new();
     private List<Toggle> legToggles = new();
+
+    // for color picker
+    private Color lastColor;
+    public FlexibleColorPicker colorPicker;
+
 
     public TMP_Text xValueText;
     public TMP_Text yValueText;
@@ -63,7 +72,7 @@ public class SpiderSegmentCustomizer : MonoBehaviour
     public Cinemachine.CinemachineVirtualCamera cmProsoma;
     public Cinemachine.CinemachineVirtualCamera cmFinishing;
 
-
+    
 
     private Dictionary<string, Color> colorMap = new()
     {
@@ -182,11 +191,34 @@ public class SpiderSegmentCustomizer : MonoBehaviour
             }
         }
 
+
+        //for color picker
+        if (colorPicker != null)
+        {
+            lastColor = colorPicker.color;
+            colorPicker.SetColor(lastColor); //  this line forces the big box to match
+        }
+
+
         //for activating different panels settings
         ShowPanel("baseModel");
 
 
 
+    }
+
+
+    private void Update()
+    {
+        if (colorPicker == null) return;
+
+        Color current = colorPicker.color;
+
+        if (current != lastColor)
+        {
+            lastColor = current;
+            SetColor(current); // this applies color to currentSegment or all selected
+        }
     }
 
     public void SetSegment(string name)
