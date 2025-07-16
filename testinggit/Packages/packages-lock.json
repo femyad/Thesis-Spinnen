@@ -1,6 +1,21 @@
 {
   "dependencies": {
-<<<<<<< HEAD
+    "com.autodesk.fbx": {
+      "version": "4.2.1",
+      "depth": 1,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.ai.navigation": {
+      "version": "1.1.6",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.modules.ai": "1.0.0"
+      },
+      "url": "https://packages.unity.com"
+    },
     "com.unity.animation.rigging": {
       "version": "1.2.1",
       "depth": 0,
@@ -18,17 +33,6 @@
       "dependencies": {
         "com.unity.mathematics": "1.2.1"
       },
-=======
-    "com.autodesk.fbx": {
-      "version": "4.2.1",
-      "depth": 1,
-      "source": "registry",
-      "dependencies": {},
-<<<<<<< HEAD
->>>>>>> 9ae5987d7adb465430bcc73e8b3be4d89453ca52
-=======
->>>>>>> aec4764ad14451977948d0483212a4b7b0c1cb9a
->>>>>>> MatthiasBranch
       "url": "https://packages.unity.com"
     },
     "com.unity.collab-proxy": {
