@@ -108,8 +108,8 @@ NavMeshSettings:
     agentTypeID: 0
     agentRadius: 0.5
     agentHeight: 2
-    agentSlope: 45
-    agentClimb: 0.4
+    agentSlope: 60
+    agentClimb: 10
     ledgeDropHeight: 0
     maxJumpAcrossDistance: 0
     minRegionArea: 2
@@ -122,7 +122,7 @@ NavMeshSettings:
     preserveTilesOutsideBounds: 0
     debug:
       m_Flags: 0
-  m_NavMeshData: {fileID: 0}
+  m_NavMeshData: {fileID: 23800000, guid: 598d9ab231c6f43879af4fbffd8a8aca, type: 2}
 --- !u!1 &39438557
 GameObject:
   m_ObjectHideFlags: 0
@@ -1183,14 +1183,15 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 352674931}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4049286529a9485a8fa3ff7f84ae5a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  raycastDistance: 200
-  heightOffset: 100
-  rotationSpeed: 5
+  raycastDistance: 5
+  heightOffset: 1.5
+  positionLerpSpeed: 5
+  rotationLerpSpeed: 5
 --- !u!114 &352674936
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1207,7 +1208,7 @@ MonoBehaviour:
   stepDuration: 0.5
   dragDuration: 0.5
   pauseTime: 0
-  thresholdDistance: 2
+  thresholdDistance: 2.5
   moveSpeed: 5
   legGroup1:
   - {fileID: 1052405294}
@@ -2075,7 +2076,7 @@ Transform:
   m_GameObject: {fileID: 602072082}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.37, y: 5.97, z: -0.22}
+  m_LocalPosition: {x: -6.19, y: 5.97, z: 2.98}
   m_LocalScale: {x: 4.6593, y: 4.6593, z: 4.6593}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3172,7 +3173,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   raycastDistance: 10
   heightOffset: 5
-  rotationSpeed: 10
+  positionLerpSpeed: 5
+  rotationLerpSpeed: 5
 --- !u!114 &864369546
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15067,8 +15069,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   axis: {x: 0, y: 1, z: 0}
-  minAngle: -30
-  maxAngle: 10
+  minAngle: -80
+  maxAngle: 60
   damping: 1
   UseComfort: 1
   ComfortAngle: -15
@@ -15085,8 +15087,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   axis: {x: 0, y: 1, z: 0}
-  minAngle: -15
-  maxAngle: 20
+  minAngle: -65
+  maxAngle: 70
   damping: 1
   UseComfort: 0
   ComfortAngle: 0
@@ -15103,8 +15105,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   axis: {x: 0, y: 1, z: 0}
-  minAngle: -40
-  maxAngle: 10
+  minAngle: -90
+  maxAngle: 60
   damping: 1
   UseComfort: 1
   ComfortAngle: -5
@@ -15121,8 +15123,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   axis: {x: 0, y: 1, z: 0}
-  minAngle: 0
-  maxAngle: 25
+  minAngle: -50
+  maxAngle: 75
   damping: 1
   UseComfort: 0
   ComfortAngle: 0
@@ -15139,8 +15141,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   axis: {x: 0, y: 1, z: 0}
-  minAngle: -10
-  maxAngle: 40
+  minAngle: -50
+  maxAngle: 90
   damping: 1
   UseComfort: 1
   ComfortAngle: 5
@@ -15157,8 +15159,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   axis: {x: 0, y: 1, z: 0}
-  minAngle: -20
-  maxAngle: 15
+  minAngle: -70
+  maxAngle: 65
   damping: 1
   UseComfort: 0
   ComfortAngle: 0
@@ -15193,8 +15195,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   axis: {x: 0, y: 1, z: 0}
-  minAngle: -25
-  maxAngle: 0
+  minAngle: -75
+  maxAngle: 50
   damping: 1
   UseComfort: 0
   ComfortAngle: 0
@@ -16662,7 +16664,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   raycastDistance: 10
   heightOffset: 5
-  rotationSpeed: 10
+  positionLerpSpeed: 5
+  rotationLerpSpeed: 5
 --- !u!4 &6176835486627276733
 Transform:
   m_ObjectHideFlags: 0
@@ -19080,6 +19083,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2078996954239580082}
+  - component: {fileID: 7703847685976318915}
   m_Layer: 0
   m_Name: abdomenRoot
   m_TagString: Untagged
@@ -19087,6 +19091,20 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &7703847685976318915
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7703847685976318914}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 09c465ff43bcf4cf190ffc903d82e833, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  prosoma: {fileID: 7602617802096279575}
+  rotationFollowSpeed: 2
 --- !u!1 &7714914400261277941
 GameObject:
   m_ObjectHideFlags: 0

@@ -64,16 +64,35 @@ public class TargetStepper : MonoBehaviour
         StartCoroutine(StepToTargetCR());
     }
 
-    private IEnumerator StepToTargetCR(){
-         float time = 0;
-         Vector3 targetPos = legTarget.position;
-         Vector3 startPos = transform.position;
-            while (time < 1f)
+    private IEnumerator StepToTargetCR()
+    {
+        float time = 0f;
+        Vector3 startPos = transform.position;
+        Vector3 targetPos = legTarget.position;
+
+        while (time < 1f)
+        {
+            time += Time.deltaTime / stepDuration;
+            float height = Mathf.Sin(time * Mathf.PI) * stepHeight;
+
+            // Raycast up/down 
+            RaycastHit hit;
+            if (Physics.Raycast(legTarget.position + Vector3.up * 2f, Vector3.down, out hit, 100f))
             {
-                time += Time.deltaTime / stepDuration;
-                float height = Mathf.Sin(time * Mathf.PI) * stepHeight;
-                transform.position = Vector3.Lerp(startPos, legTarget.position, time) + Vector3.up * height;
-                yield return null;
+                targetPos = hit.point;
             }
+            else if (Physics.Raycast(legTarget.position + Vector3.down * 2f, Vector3.up, out hit, 100f))
+            {
+                targetPos = hit.point;
+            }
+
+            Vector3 stepPos = Vector3.Lerp(startPos, targetPos, time) + Vector3.up * height;
+            transform.position = stepPos;
+
+            yield return null;
+        }
+
+        transform.position = targetPos; // to ground
     }
+
 }

@@ -20,7 +20,7 @@ public class TranslateMovement : MonoBehaviour
 
     public float raycastDistance = 1f; // Raycast length to detect terrain (jumping)
     public LayerMask terrainLayer; // Layer mask for the terrain (jumping)
-    public spiderAllignment allignment;
+    public SpiderAllignment allignment;
     
     private float currentSpeed = 0;
     public float GetCurrentSpeed()
@@ -34,7 +34,7 @@ public class TranslateMovement : MonoBehaviour
     void Start()
     {
         animator = GetComponent<Animator>();
-        allignment = GetComponent<spiderAllignment>();
+        allignment = GetComponent<SpiderAllignment>();
         currentSpeed = 0;
         Debug.Log(allignment);
     }

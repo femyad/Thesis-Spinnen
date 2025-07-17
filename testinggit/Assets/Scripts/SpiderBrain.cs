@@ -74,12 +74,12 @@ public class SpiderBrain : MonoBehaviour
         transform.Translate(moveDir, Space.Self);
         float deltaMove = Vector3.Distance (transform.position, previousPos);
         float deltaAngle = Quaternion.Angle(transform.rotation, previousRotation);
-        float rotationToDistanceFactor = 0.10f; // hoe snel optelt voor rotate
+        float rotationToDistanceFactor = 0.12f; // hoe snel optelt voor rotate
         distTraveled += deltaMove + (deltaAngle * rotationToDistanceFactor);
         distTraveled += deltaMove;
         Debug.Log(distTraveled);
         if(Math.Abs(distTraveled)> thresholdDistance){
-            debugSphere.SetActive (true);
+            // debugSphere.SetActive (true);
             Debug.Log("time to move!");
             foreach(TargetStepper legTarget in currentLegGroup){
                 legTarget.StepToTarget();
