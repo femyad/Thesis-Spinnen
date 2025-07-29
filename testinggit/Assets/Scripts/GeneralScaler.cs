@@ -69,7 +69,7 @@ public class GeneralScaler : MonoBehaviour
 
     private class LegChain
     {
-        public Transform coxaRoot, trochanterRoot, femurRoot, patellaRoot, tibiaRoot, metatarsusRoot, tarsusRoot;
+        public Transform coxaRoot, femurRoot, patellaRoot, metatarsusRoot, tarsusRoot, tipRoot;
         public Transform coxa, trochanter, femur, patella, tibia, metatarsus, tarsus;
         public JointOverlapSettings overlap;
     }
@@ -141,12 +141,13 @@ public class GeneralScaler : MonoBehaviour
         {
             var o = leg.overlap;
 
-            PositionJoint(leg.coxa, leg.coxaRoot, leg.trochanterRoot, o.overlapCoxaToTrochanter, o);
-            PositionJoint(leg.trochanter, leg.trochanterRoot, leg.femurRoot, o.overlapTrochanterToFemur, o);
+            //PositionJoint(leg.coxa, leg.coxaRoot, leg.femurRoot, o.overlapCoxaToTrochanter, o); // will be used together with trochanter
+            PositionJoint(leg.trochanter, leg.coxaRoot, leg.femurRoot, o.overlapTrochanterToFemur, o);
             PositionJoint(leg.femur, leg.femurRoot, leg.patellaRoot, o.overlapFemurToPatella, o);
-            PositionJoint(leg.patella, leg.patellaRoot, leg.tibiaRoot, o.overlapPatellaToTibia, o);
-            PositionJoint(leg.tibia, leg.tibiaRoot, leg.metatarsusRoot, o.overlapTibiaToMetatarsus, o);
+            //PositionJoint(leg.patella, leg.patellaRoot, leg.tibia, o.overlapPatellaToTibia, o); //will be used together with tibia
+            PositionJoint(leg.tibia, leg.patellaRoot, leg.metatarsusRoot, o.overlapTibiaToMetatarsus, o);
             PositionJoint(leg.metatarsus, leg.metatarsusRoot, leg.tarsusRoot, o.overlapMetatarsusToTarsus, o);
+            PositionJoint(leg.tarsus, leg.tarsusRoot, leg.tipRoot, 0f, o); // No overlap past tipRoot
         }
     }
 
@@ -190,10 +191,28 @@ public class GeneralScaler : MonoBehaviour
     {
         allLegs.Clear();
 
-        Transform prosomaRoot = transform.Find("prosomaRoot");
+        /*Transform prosomaRoot = transform.Find("prosomaRoot");
         if (prosomaRoot == null)
         {
             Debug.LogError("Could not find 'prosomaRoot' under " + transform.name);
+            return;
+        }*/
+
+        Transform prosomaRoot = null;
+
+        foreach (Transform t in GetComponentsInChildren<Transform>(true))
+        {
+            if (t.name == "prosomaRoot")
+            {
+                prosomaRoot = t;
+                Debug.LogError(" 'prosomaRoot' found under " + transform.name);
+                break;
+            }
+        }
+
+        if (prosomaRoot == null)
+        {
+            Debug.LogError("Could not find 'prosomaRoot' anywhere under " + transform.name);
             return;
         }
 
@@ -205,27 +224,24 @@ public class GeneralScaler : MonoBehaviour
             if (coxaRoot == null) continue;
 
             var chain = new LegChain();
-
             chain.coxaRoot = coxaRoot;
+
             chain.coxa = coxaRoot.Find("coxa");
-            chain.trochanterRoot = coxaRoot.Find("trochanterRoot");
+            chain.trochanter = coxaRoot.Find("trochanter");
+            chain.femurRoot = coxaRoot.Find("femurRoot");
 
-            chain.trochanter = chain.trochanterRoot.Find("trochanter");
-            chain.femurRoot = chain.trochanterRoot.Find("femurRoot");
+            chain.femur = chain.femurRoot?.Find("femur");
+            chain.patellaRoot = chain.femurRoot?.Find("patellaRoot");
 
-            chain.femur = chain.femurRoot.Find("femur");
-            chain.patellaRoot = chain.femurRoot.Find("patellaRoot");
+            chain.patella = chain.patellaRoot?.Find("patella");
+            chain.tibia = chain.patellaRoot?.Find("tibia");
+            chain.metatarsusRoot = chain.patellaRoot?.Find("metatarsusRoot");
 
-            chain.patella = chain.patellaRoot.Find("patella");
-            chain.tibiaRoot = chain.patellaRoot.Find("tibiaRoot");
+            chain.metatarsus = chain.metatarsusRoot?.Find("metatarsus");
+            chain.tarsusRoot = chain.metatarsusRoot?.Find("tarsusRoot");
 
-            chain.tibia = chain.tibiaRoot.Find("tibia");
-            chain.metatarsusRoot = chain.tibiaRoot.Find("metatarsusRoot");
-
-            chain.metatarsus = chain.metatarsusRoot.Find("metatarsus");
-            chain.tarsusRoot = chain.metatarsusRoot.Find("tarsusRoot");
-
-            chain.tarsus = chain.tarsusRoot.Find("tarsus");
+            chain.tarsus = chain.tarsusRoot?.Find("tarsus");
+            chain.tipRoot = chain.tarsusRoot?.Find("tipRoot");
 
             int legIndex = -1;
             if (child.name.Length >= 5 && int.TryParse(child.name.Substring(4, 1), out legIndex))
@@ -242,6 +258,7 @@ public class GeneralScaler : MonoBehaviour
 
             allLegs.Add(chain);
         }
+
     }
 
     private void InitializeAbdomen() 

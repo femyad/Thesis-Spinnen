@@ -73,6 +73,9 @@ public class SpiderSegmentCustomizer : MonoBehaviour
     public Cinemachine.CinemachineVirtualCamera cmFinishing;
 
     
+    // for launching the spider
+    public GameObject customizationUI; // reference to the parent Panel
+    public GameObject spiderGameMode; // e.g. camera, input scripts, etc.
 
     private Dictionary<string, Color> colorMap = new()
     {
@@ -281,18 +284,23 @@ public class SpiderSegmentCustomizer : MonoBehaviour
     {
         xValueText.text = value.ToString("F2");
         ApplyScale(value, "x");
+
+
+
     }
 
     public void SetYScale(float value)
     {
         yValueText.text = value.ToString("F2");
         ApplyScale(value, "y");
+
     }
 
     public void SetZScale(float value)
     {
         zValueText.text = value.ToString("F2");
         ApplyScale(value, "z");
+
     }
 
 
@@ -449,6 +457,22 @@ public class SpiderSegmentCustomizer : MonoBehaviour
         cmProsoma.Priority = (view == "prosoma") ? 10 : 0;
         cmFinishing.Priority = (view == "finishing") ? 10 : 0;
     }
+
+
+
+    public void LaunchSpider()
+    {
+        Debug.Log("Launching spider! ");
+
+        customizationUI.SetActive(false);     // hide UI
+        spiderGameMode.SetActive(true);       // show game mode logic
+
+        // optionally enable movement script:
+        //spiderRoot.GetComponent<SpiderMovement>()?.enabled = true;
+    }
+
+
+    
 
 
 }
