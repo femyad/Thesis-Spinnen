@@ -5,6 +5,7 @@ using TMPro;
 using System.Drawing;
 using Unity.VisualScripting;
 using Color = UnityEngine.Color;
+using System.Linq;
 
 
 public class SpiderSegmentCustomizer : MonoBehaviour
@@ -283,7 +284,17 @@ public class SpiderSegmentCustomizer : MonoBehaviour
     public void SetXScale(float value)
     {
         xValueText.text = value.ToString("F2");
+       
+
         ApplyScale(value, "x");
+        UpdateBodyTargetsToLegTips();
+        //UpdateIKTargetsToLegTips();
+
+         foreach (var solver in spiderRoot.GetComponentsInChildren<IKSolverGradientDescent>())
+        {
+            solver.RefreshCurrentAngles();
+            solver.ForceRecalculate();
+        }
 
 
 
@@ -292,14 +303,34 @@ public class SpiderSegmentCustomizer : MonoBehaviour
     public void SetYScale(float value)
     {
         yValueText.text = value.ToString("F2");
+
+        
         ApplyScale(value, "y");
+        UpdateBodyTargetsToLegTips();
+        // UpdateIKTargetsToLegTips();
+
+         foreach (var solver in spiderRoot.GetComponentsInChildren<IKSolverGradientDescent>())
+        {
+            solver.RefreshCurrentAngles();
+            solver.ForceRecalculate();
+        }
 
     }
 
     public void SetZScale(float value)
     {
         zValueText.text = value.ToString("F2");
+
+        
         ApplyScale(value, "z");
+        UpdateBodyTargetsToLegTips();
+        //UpdateIKTargetsToLegTips();
+
+        foreach (var solver in spiderRoot.GetComponentsInChildren<IKSolverGradientDescent>())
+        {
+            solver.RefreshCurrentAngles();
+            solver.ForceRecalculate();
+        }
 
     }
 
@@ -472,7 +503,70 @@ public class SpiderSegmentCustomizer : MonoBehaviour
     }
 
 
-    
+   /* private void UpdateIKTargetsToLegTips()
+    {
+        var allTargets = spiderRoot.GetComponentsInChildren<TargetStepper>(true);
+
+        foreach (var targetStepper in allTargets)
+        {
+            string targetName = targetStepper.name;
+            string legName = targetName.Replace("IKTarget", "Leg");
+
+            Transform legRoot = spiderRoot.GetComponentsInChildren<Transform>(true)
+                .FirstOrDefault(t => t.name == legName);
+
+            if (legRoot == null)
+            {
+                Debug.LogWarning($" Leg not found for target {targetName}");
+                continue;
+            }
+
+            Transform tip = legRoot.GetComponentsInChildren<Transform>(true)
+                .FirstOrDefault(t => t.name == "tipRoot" || t.name == "tarsus");
+
+            if (tip != null)
+            {
+                targetStepper.transform.position = tip.position;
+                targetStepper.transform.rotation = tip.rotation;
+                Debug.Log($" Moved {targetStepper.name} to {tip.name} of {legName}");
+            }
+            else
+            {
+                Debug.LogWarning($" No tip or tarsus found in {legName}");
+            }
+        }
+    }*/
+
+    private void UpdateBodyTargetsToLegTips()
+    {
+        var allTargets = spiderRoot.GetComponentsInChildren<Transform>(true)
+            .Where(t => t.name.StartsWith("BodyTarget"));
+
+        foreach (var bodyTarget in allTargets)
+        {
+            string targetName = bodyTarget.name; // e.g., BodyTargetL1
+            string legName = targetName.Replace("BodyTarget", "Leg"); // e.g., LegL1
+
+            Transform legRoot = spiderRoot.GetComponentsInChildren<Transform>(true)
+                .FirstOrDefault(t => t.name == legName);
+
+            if (legRoot == null)
+            {
+                Debug.LogWarning($" Leg root not found for {targetName}");
+                continue;
+            }
+
+            Transform tip = legRoot.GetComponentsInChildren<Transform>(true)
+                .FirstOrDefault(t => t.name == "tipRoot" || t.name == "tarsus");
+
+            if (tip != null)
+            {
+                bodyTarget.position = tip.position;
+                bodyTarget.rotation = tip.rotation;
+                Debug.Log($" Moved {bodyTarget.name} to tip of {legName}");
+            }
+        }
+    }
 
 
 }
