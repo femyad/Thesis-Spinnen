@@ -34,7 +34,9 @@ public class GeneralScaler : MonoBehaviour
     }
     private List<AbdomenParts> abdomenParts = new List<AbdomenParts>();
 
-
+    //spinnerets
+    private Vector3 spinneretLocalOffset;
+    private Transform spinneretRoot;
 
 
 
@@ -86,6 +88,12 @@ public class GeneralScaler : MonoBehaviour
         InitializeProsoma();
         SetupProsomaParts();
 
+
+        spinneretRoot = abdomenRoot.Find("spinneretRoot");
+        if (abdomen != null && spinneretRoot != null)
+        {
+            spinneretLocalOffset = spinneretRoot.position - abdomen.position;
+        }
         /*if (Application.isPlaying)
         {
             UpdateLegPositions();
@@ -131,6 +139,19 @@ public class GeneralScaler : MonoBehaviour
             );
 
             part.part.position = abdomen.position + scaledOffset;
+        }
+
+        // Sync spinneret position and rotation
+        if (spinneretRoot != null)
+        {
+            Vector3 scaledSpinneretOffset = new Vector3(
+                spinneretLocalOffset.x * abdomenCompensatedScale.x,
+                spinneretLocalOffset.y * abdomenCompensatedScale.y,
+                spinneretLocalOffset.z * abdomenCompensatedScale.z
+            );
+
+            spinneretRoot.position = abdomen.position + abdomen.rotation * scaledSpinneretOffset;
+            spinneretRoot.rotation = abdomen.rotation;
         }
 
 
