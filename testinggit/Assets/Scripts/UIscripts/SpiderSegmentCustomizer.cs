@@ -288,10 +288,14 @@ public class SpiderSegmentCustomizer : MonoBehaviour
 
         ApplyScale(value, "x");
         UpdateBodyTargetsToLegTips();
-        //UpdateIKTargetsToLegTips();
 
-         foreach (var solver in spiderRoot.GetComponentsInChildren<IKSolverGradientDescent>())
+        foreach (var solver in spiderRoot.GetComponentsInChildren<IKSolverGradientDescent>())
         {
+            foreach (var joint in solver.joints)
+            {
+                joint.RefreshDefaultPos();
+            }
+
             solver.RefreshCurrentAngles();
             solver.ForceRecalculate();
         }
@@ -307,10 +311,14 @@ public class SpiderSegmentCustomizer : MonoBehaviour
         
         ApplyScale(value, "y");
         UpdateBodyTargetsToLegTips();
-        // UpdateIKTargetsToLegTips();
 
-         foreach (var solver in spiderRoot.GetComponentsInChildren<IKSolverGradientDescent>())
+        foreach (var solver in spiderRoot.GetComponentsInChildren<IKSolverGradientDescent>())
         {
+            foreach (var joint in solver.joints)
+            {
+                joint.RefreshDefaultPos();
+            }
+
             solver.RefreshCurrentAngles();
             solver.ForceRecalculate();
         }
@@ -324,12 +332,16 @@ public class SpiderSegmentCustomizer : MonoBehaviour
         
         ApplyScale(value, "z");
         UpdateBodyTargetsToLegTips();
-        //UpdateIKTargetsToLegTips();
 
         foreach (var solver in spiderRoot.GetComponentsInChildren<IKSolverGradientDescent>())
         {
-            solver.RefreshCurrentAngles();
-            solver.ForceRecalculate();
+            foreach (var joint in solver.joints)
+            {
+                joint.RefreshDefaultPos(); 
+            }
+
+            solver.RefreshCurrentAngles(); 
+            solver.ForceRecalculate();     
         }
 
     }
@@ -503,39 +515,6 @@ public class SpiderSegmentCustomizer : MonoBehaviour
     }
 
 
-   /* private void UpdateIKTargetsToLegTips()
-    {
-        var allTargets = spiderRoot.GetComponentsInChildren<TargetStepper>(true);
-
-        foreach (var targetStepper in allTargets)
-        {
-            string targetName = targetStepper.name;
-            string legName = targetName.Replace("IKTarget", "Leg");
-
-            Transform legRoot = spiderRoot.GetComponentsInChildren<Transform>(true)
-                .FirstOrDefault(t => t.name == legName);
-
-            if (legRoot == null)
-            {
-                Debug.LogWarning($" Leg not found for target {targetName}");
-                continue;
-            }
-
-            Transform tip = legRoot.GetComponentsInChildren<Transform>(true)
-                .FirstOrDefault(t => t.name == "tipRoot" || t.name == "tarsus");
-
-            if (tip != null)
-            {
-                targetStepper.transform.position = tip.position;
-                targetStepper.transform.rotation = tip.rotation;
-                Debug.Log($" Moved {targetStepper.name} to {tip.name} of {legName}");
-            }
-            else
-            {
-                Debug.LogWarning($" No tip or tarsus found in {legName}");
-            }
-        }
-    }*/
 
     private void UpdateBodyTargetsToLegTips()
     {
@@ -567,6 +546,8 @@ public class SpiderSegmentCustomizer : MonoBehaviour
             }
         }
     }
+
+   
 
 
 }

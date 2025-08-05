@@ -18,6 +18,32 @@ public class GeneralScaler : MonoBehaviour
     }
     private List<ProsomaParts> prosomaParts = new List<ProsomaParts>();
 
+    //prosomaparts
+    // Prosoma external parts
+    private Transform pedipalpLeft;
+    private Transform pedipalpRight;
+    private Transform cheliceraeLeft;
+    private Transform cheliceraeRight;
+    private Transform eyes;
+
+    private Vector3 offsetPedipalpL;
+    private Vector3 offsetPedipalpR;
+    private Vector3 offsetCheliceraeL;
+    private Vector3 offsetCheliceraeR;
+    private Vector3 offsetEyes;
+
+    private Quaternion initialProsomaRotation;
+    private Quaternion initialPedipalpLRot;
+    private Quaternion initialPedipalpRRot;
+    private Quaternion initialCheliceraeLRot;
+    private Quaternion initialCheliceraeRRot;
+    private Quaternion initialEyesRot;
+
+    //lesg parts
+    private Transform[] legTransforms = new Transform[8];
+    private Vector3[] legOffsets = new Vector3[8];
+    private Quaternion[] initialLegRotations = new Quaternion[8];
+
 
 
     //Abdomen references
@@ -121,6 +147,68 @@ public class GeneralScaler : MonoBehaviour
 
             part.part.position = prosoma.position + scaledOffset;
         }
+
+        if (prosoma != null)
+        {
+            Vector3 compScale = new Vector3(
+                prosoma.localScale.x * (1 - prosomaOverlapCompensation.x),
+                prosoma.localScale.y * (1 - prosomaOverlapCompensation.y),
+                prosoma.localScale.z * (1 - prosomaOverlapCompensation.z)
+            );
+
+            Quaternion deltaRot = prosoma.rotation * Quaternion.Inverse(initialProsomaRotation);
+            Vector3 pos = prosoma.position;
+
+            if (pedipalpLeft != null)
+            {
+                Vector3 scaled = Vector3.Scale(offsetPedipalpL, compScale);
+                pedipalpLeft.position = pos + prosoma.rotation * scaled;
+                pedipalpLeft.rotation = deltaRot * initialPedipalpLRot;
+            }
+
+            if (pedipalpRight != null)
+            {
+                Vector3 scaled = Vector3.Scale(offsetPedipalpR, compScale);
+                pedipalpRight.position = pos + prosoma.rotation * scaled;
+                pedipalpRight.rotation = deltaRot * initialPedipalpRRot;
+            }
+
+            if (cheliceraeLeft != null)
+            {
+                Vector3 scaled = Vector3.Scale(offsetCheliceraeL, compScale);
+                cheliceraeLeft.position = pos + prosoma.rotation * scaled;
+                cheliceraeLeft.rotation = deltaRot * initialCheliceraeLRot;
+            }
+
+            if (cheliceraeRight != null)
+            {
+                Vector3 scaled = Vector3.Scale(offsetCheliceraeR, compScale);
+                cheliceraeRight.position = pos + prosoma.rotation * scaled;
+                cheliceraeRight.rotation = deltaRot * initialCheliceraeRRot;
+            }
+
+            if (eyes != null)
+            {
+                Vector3 scaled = Vector3.Scale(offsetEyes, compScale);
+                eyes.position = pos + prosoma.rotation * scaled;
+                eyes.rotation = deltaRot * initialEyesRot;
+            }
+
+            for (int i = 0; i < 8; i++)
+            {
+                if (legTransforms[i] == null) continue;
+
+                Vector3 scaledOffset = Vector3.Scale(legOffsets[i], compScale);
+                legTransforms[i].position = prosoma.position + prosoma.rotation * scaledOffset;
+
+                Quaternion deltaRotation = prosoma.rotation * Quaternion.Inverse(initialProsomaRotation);
+                legTransforms[i].rotation = deltaRotation * initialLegRotations[i];
+            }
+
+        }
+
+
+
 
 
         //Abdomen
@@ -363,4 +451,53 @@ public class GeneralScaler : MonoBehaviour
             });
         }
     }
+
+    public void SetupProsomaAttachments(
+    Transform pedipalpL, Transform pedipalpR,
+    Transform cheliceraeL, Transform cheliceraeR,
+    Transform eyes,
+    Vector3 offsetL, Vector3 offsetR,
+    Vector3 offsetCL, Vector3 offsetCR,
+    Vector3 offsetE,
+    Quaternion prosomaRot,
+    Quaternion rotL, Quaternion rotR,
+    Quaternion rotCL, Quaternion rotCR,
+    Quaternion rotE
+    )
+    {
+        pedipalpLeft = pedipalpL;
+        pedipalpRight = pedipalpR;
+        cheliceraeLeft = cheliceraeL;
+        cheliceraeRight = cheliceraeR;
+        this.eyes = eyes;
+
+        offsetPedipalpL = offsetL;
+        offsetPedipalpR = offsetR;
+        offsetCheliceraeL = offsetCL;
+        offsetCheliceraeR = offsetCR;
+        offsetEyes = offsetE;
+
+        initialProsomaRotation = prosomaRot;
+        initialPedipalpLRot = rotL;
+        initialPedipalpRRot = rotR;
+        initialCheliceraeLRot = rotCL;
+        initialCheliceraeRRot = rotCR;
+        initialEyesRot = rotE;
+    }
+
+    public void SetupLegAttachments(
+    Transform[] legs,
+    Vector3[] offsets,
+    Quaternion[] rotations
+    )
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            legTransforms[i] = legs[i];
+            legOffsets[i] = offsets[i];
+            initialLegRotations[i] = rotations[i];
+        }
+    }
+
+
 }
