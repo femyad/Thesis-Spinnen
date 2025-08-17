@@ -255,36 +255,87 @@ public class AbdomenCustomizer : MonoBehaviour
         for (int i = 0; i < abdomenShapeButtons.Count; i++)
         {
             int index = i;
-            abdomenShapeButtons[i].onClick.AddListener(() => {
-                foreach (var ab in abdomenPrefabs)
-                    ab.SetActive(false);
-                abdomenPrefabs[index].SetActive(true);
-                abdomenObject = abdomenPrefabs[index];
+            abdomenShapeButtons[i].onClick.AddListener(() =>
+            {
+                var newMesh = ExtractMeshFromPrefab(abdomenPrefabs[index]);
+                if (newMesh == null)
+                {
+                    Debug.LogWarning($"No mesh found in abdomen prefab {abdomenPrefabs[index].name}");
+                    return;
+                }
 
-                Renderer rend = abdomenObject.GetComponent<Renderer>();
-                if (rend != null && abdomenMaterialInstance != null)
-                    rend.material = abdomenMaterialInstance;
+                // apply to the existing abdomenObject
+                var mf = abdomenObject.GetComponent<MeshFilter>();
+                if (mf) mf.sharedMesh = newMesh;
+                else
+                {
+                    var smr = abdomenObject.GetComponent<SkinnedMeshRenderer>();
+                    if (smr) smr.sharedMesh = newMesh;
+                    else Debug.LogError("Abdomen object has no MeshFilter or SkinnedMeshRenderer!");
+                }
+
+                // keep material consistent
+                if (abdomenMaterialInstance != null)
+                {
+                    var r = abdomenObject.GetComponent<Renderer>();
+                    if (r) r.material = abdomenMaterialInstance;
+                }
+
+                // keep sliders in sync
+                SyncSlidersWithAbdomen();
             });
         }
     }
+
 
     void InitSpinneretButtons()
     {
         for (int i = 0; i < spinneretButtons.Count; i++)
         {
             int index = i;
-            spinneretButtons[i].onClick.AddListener(() => {
-                foreach (var s in spinneretPrefabs)
-                    s.SetActive(false);
-                spinneretPrefabs[index].SetActive(true);
-                spinneretObject = spinneretPrefabs[index];
+            spinneretButtons[i].onClick.AddListener(() =>
+            {
+                var newMesh = ExtractMeshFromPrefab(spinneretPrefabs[index]);
+                if (newMesh == null)
+                {
+                    Debug.LogWarning($"No mesh found in spinneret prefab {spinneretPrefabs[index].name}");
+                    return;
+                }
 
-                Renderer rend = spinneretObject.GetComponent<Renderer>();
-                if (rend != null && abdomenMaterialInstance != null)
-                    rend.material = abdomenMaterialInstance;
+                // apply to the existing spinneretObject
+                var mf = spinneretObject.GetComponent<MeshFilter>();
+                if (mf) mf.sharedMesh = newMesh;
+                else
+                {
+                    var smr = spinneretObject.GetComponent<SkinnedMeshRenderer>();
+                    if (smr) smr.sharedMesh = newMesh;
+                    else Debug.LogError("Spinneret object has no MeshFilter or SkinnedMeshRenderer!");
+                }
+
+                if (abdomenMaterialInstance != null)
+                {
+                    var r = spinneretObject.GetComponent<Renderer>();
+                    if (r) r.material = abdomenMaterialInstance;
+                }
+
+                // sync spinneret size fields
+                SyncSlidersWithAbdomen();
             });
         }
     }
+
+
+    Mesh ExtractMeshFromPrefab(GameObject prefab)
+    {
+        var mf = prefab.GetComponentInChildren<MeshFilter>(true);
+        if (mf && mf.sharedMesh) return mf.sharedMesh;
+
+        var smr = prefab.GetComponentInChildren<SkinnedMeshRenderer>(true);
+        if (smr && smr.sharedMesh) return smr.sharedMesh;
+
+        return null;
+    }
+
 
     void InitTextureButtons()
     {

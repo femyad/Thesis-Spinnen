@@ -77,6 +77,7 @@ public class ProsomaCustomizer : MonoBehaviour
     public List<GameObject> prosomaPrefabs;
     public List<Button> prosomaShapeButtons;
 
+
     [Header("Eye Shape Selection")]
     public List<GameObject> eyePrefabs;
     public List<Button> eyeShapeButtons;
@@ -194,6 +195,8 @@ public class ProsomaCustomizer : MonoBehaviour
 
         panelProsoma2.SetActive(false);
     }
+
+
 
     void LateUpdate()
     {
@@ -362,33 +365,101 @@ public class ProsomaCustomizer : MonoBehaviour
         }
     }
 
+    /* void InitProsomaShapeButtons()
+     {
+         for (int i = 0; i < prosomaShapeButtons.Count; i++)
+         {
+             int index = i;
+             prosomaShapeButtons[i].onClick.AddListener(() => {
+                 foreach (var p in prosomaPrefabs) p.SetActive(false);
+                 prosomaPrefabs[index].SetActive(true);
+                 prosomaObject = prosomaPrefabs[index];
+                 ApplyMaterialToAllTargets(sharedMaterial);
+                 SyncTransformValues();
+             });
+         }
+     }*/
+
+
+
     void InitProsomaShapeButtons()
     {
         for (int i = 0; i < prosomaShapeButtons.Count; i++)
         {
             int index = i;
-            prosomaShapeButtons[i].onClick.AddListener(() => {
-                foreach (var p in prosomaPrefabs) p.SetActive(false);
-                prosomaPrefabs[index].SetActive(true);
-                prosomaObject = prosomaPrefabs[index];
+            prosomaShapeButtons[i].onClick.AddListener(() =>
+            {
+                var newMesh = ExtractMeshFromPrefab(prosomaPrefabs[index]);
+                if (newMesh == null)
+                {
+                    Debug.LogWarning($"No mesh found in prefab {prosomaPrefabs[index].name}");
+                    return;
+                }
+
+                // Just apply directly to the current prosoma object
+                var mf = prosomaObject.GetComponent<MeshFilter>();
+                if (mf != null)
+                {
+                    mf.sharedMesh = newMesh;
+                }
+                else
+                {
+                    var smr = prosomaObject.GetComponent<SkinnedMeshRenderer>();
+                    if (smr != null) smr.sharedMesh = newMesh;
+                    else Debug.LogError("Prosoma object has no MeshFilter or SkinnedMeshRenderer!");
+                }
+
                 ApplyMaterialToAllTargets(sharedMaterial);
                 SyncTransformValues();
             });
         }
     }
 
+
+
     void InitEyeShapeButtons()
     {
         for (int i = 0; i < eyeShapeButtons.Count; i++)
         {
             int index = i;
-            eyeShapeButtons[i].onClick.AddListener(() => {
-                foreach (var e in eyePrefabs) e.SetActive(false);
-                eyePrefabs[index].SetActive(true);
-                eyes = eyePrefabs[index];
-                ApplyMaterialToAllTargets(sharedMaterial);
+            eyeShapeButtons[i].onClick.AddListener(() =>
+            {
+                var newMesh = ExtractMeshFromPrefab(eyePrefabs[index]);
+                if (newMesh == null)
+                {
+                    Debug.LogWarning($"No mesh found in eye prefab {eyePrefabs[index].name}");
+                    return;
+                }
+
+                // Apply the mesh to the existing 'eyes' object (no parenting/activating)
+                var mf = eyes.GetComponent<MeshFilter>();
+                if (mf != null)
+                {
+                    mf.sharedMesh = newMesh;
+                }
+                else
+                {
+                    var smr = eyes.GetComponent<SkinnedMeshRenderer>();
+                    if (smr != null) smr.sharedMesh = newMesh;
+                    else Debug.LogError("Eyes object has no MeshFilter or SkinnedMeshRenderer!");
+                }
+
+                ApplyMaterialToAllTargets(sharedMaterial); // keep material consistent
+                                                           // No need to change transforms; everything stays put.
             });
         }
+    }
+
+
+    Mesh ExtractMeshFromPrefab(GameObject prefab)
+    {
+        var mf = prefab.GetComponentInChildren<MeshFilter>(true);
+        if (mf && mf.sharedMesh) return mf.sharedMesh;
+
+        var smr = prefab.GetComponentInChildren<SkinnedMeshRenderer>(true);
+        if (smr && smr.sharedMesh) return smr.sharedMesh;
+
+        return null;
     }
 
     void SyncTransformValues()

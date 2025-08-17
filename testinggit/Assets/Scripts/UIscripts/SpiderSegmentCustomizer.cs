@@ -508,10 +508,8 @@ public class SpiderSegmentCustomizer : MonoBehaviour
         Debug.Log("Launching spider! ");
 
         customizationUI.SetActive(false);     // hide UI
-        spiderGameMode.SetActive(true);       // show game mode logic
+        //spiderGameMode.SetActive(true);       // show game mode logic
 
-        // optionally enable movement script:
-        //spiderRoot.GetComponent<SpiderMovement>()?.enabled = true;
     }
 
 
