@@ -5,7 +5,6 @@ using TMPro;
 using System.IO;
 using System.Linq;
 
-
 [System.Serializable]
 public class TransformData
 {
@@ -13,13 +12,10 @@ public class TransformData
     public Vector3 position;
     public Quaternion rotation;
     public Vector3 scale;
+
+    public string materialName;
+    public Color color;
 }
-
-
-
-
-
-
 
 [System.Serializable]
 public class TransformDataList
@@ -30,8 +26,7 @@ public class TransformDataList
 public class SpiderTransformManager : MonoBehaviour
 {
     [Header("Spider Config Settings")]
-    public string spiderName = "NewSpider";  // Set the spider type name here
-
+    public string spiderName = "NewSpider";
 
     [Header("UI Elements")]
     public TMP_InputField spiderNameInput;
@@ -40,45 +35,34 @@ public class SpiderTransformManager : MonoBehaviour
     public Button loadButton;
     public Button refreshButton;
 
-
-
     void Start()
     {
-        // Optional: hook buttons dynamically if needed
         if (saveButton != null) saveButton.onClick.AddListener(SaveFromUI);
         if (loadButton != null) loadButton.onClick.AddListener(LoadFromUI);
         if (refreshButton != null) refreshButton.onClick.AddListener(RefreshDropdown);
 
-        RefreshDropdown(); // Load available configs on start
+        RefreshDropdown();
     }
 
-
-
-
-    // Save current transforms to JSON
     public void SaveTransforms(string savePath)
     {
         TransformDataList dataList = new TransformDataList();
 
-        // Start from children to skip the root object itself
         foreach (Transform child in transform)
         {
             TraverseHierarchy(child, "", dataList);
         }
 
         string json = JsonUtility.ToJson(dataList, true);
-        System.IO.File.WriteAllText(savePath, json);
+        File.WriteAllText(savePath, json);
 
 #if UNITY_EDITOR
         UnityEditor.AssetDatabase.Refresh();
 #endif
 
-        Debug.Log($" Saved spider config to: {savePath}");
+        Debug.Log($"Saved spider config to: {savePath}");
     }
 
-
-
-    // Load transforms from JSON string
     public void LoadTransforms(string jsonText)
     {
         TransformDataList dataList = JsonUtility.FromJson<TransformDataList>(jsonText);
@@ -87,7 +71,7 @@ public class SpiderTransformManager : MonoBehaviour
         {
             if (string.IsNullOrEmpty(data.path))
             {
-                Debug.LogWarning(" Empty path detected, skipping.");
+                Debug.LogWarning("Empty path detected, skipping.");
                 continue;
             }
 
@@ -97,24 +81,52 @@ public class SpiderTransformManager : MonoBehaviour
                 target.localPosition = data.position;
                 target.localRotation = data.rotation;
                 target.localScale = data.scale;
+
+                Renderer renderer = target.GetComponent<Renderer>();
+                if (renderer != null)
+                {
+                    Material finalMat = null;
+
+                    if (!string.IsNullOrEmpty(data.materialName))
+                    {
+                        finalMat = Resources.Load<Material>("SpiderSkinMaterials/" + data.materialName);
+                        if (finalMat == null)
+                        {
+                            Debug.LogWarning($"Material 'SpiderSkinMaterials/{data.materialName}' not found in Resources.");
+                        }
+                    }
+
+                    if (finalMat == null)
+                    {
+                        finalMat = Resources.Load<Material>("SpiderSkinMaterials/Fallback_Mat");
+                        Debug.LogWarning($"Using fallback material for {data.path}");
+                    }
+
+                    if (finalMat != null)
+                    {
+                        renderer.material = new Material(finalMat);
+                        if (renderer.material.HasProperty("_Color"))
+                        {
+                            renderer.material.color = data.color;
+                        }
+
+                        Debug.Log($"Applied material: {renderer.material.name} with color {renderer.material.color}");
+                    }
+                }
             }
             else
             {
-                Debug.LogWarning($" Transform not found: {data.path}");
+                Debug.LogWarning($"Transform not found: {data.path}");
             }
         }
 
-        Debug.Log(" Spider settings loaded successfully!");
+        Debug.Log("Spider settings loaded successfully!");
     }
 
-
-
-    // Recursive method to collect transform data
     private void TraverseHierarchy(Transform current, string path, TransformDataList dataList)
     {
         string currentPath = string.IsNullOrEmpty(path) ? current.name : path + "/" + current.name;
 
-        // Check if this GameObject has a visible mesh
         bool hasMesh = current.GetComponent<MeshRenderer>() != null || current.GetComponent<SkinnedMeshRenderer>() != null;
 
         if (hasMesh)
@@ -127,17 +139,50 @@ public class SpiderTransformManager : MonoBehaviour
                 scale = current.localScale
             };
 
+            Renderer renderer = current.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                Material mat = renderer.sharedMaterial;
+
+#if UNITY_EDITOR
+                if (mat != null)
+                {
+                    string assetPath = UnityEditor.AssetDatabase.GetAssetPath(mat);
+
+                    if (assetPath.Contains("unity_builtin_extra") || mat.name == "Default-Material")
+                    {
+                        Debug.Log($"Skipping built-in or default material on {current.name}");
+                        data.materialName = "";
+                    }
+                    else
+                    {
+                        string fileName = Path.GetFileNameWithoutExtension(assetPath);
+                        data.materialName = fileName;
+                        Debug.Log($"Saving material '{fileName}' on {current.name}");
+                    }
+                }
+                else
+                {
+                    data.materialName = "";
+                }
+#else
+                data.materialName = mat != null ? mat.name.Replace(" (Instance)", "") : "";
+#endif
+
+                if (renderer.sharedMaterial != null && renderer.sharedMaterial.HasProperty("_Color"))
+                    data.color = renderer.sharedMaterial.color;
+                else
+                    data.color = Color.white;
+            }
+
             dataList.items.Add(data);
         }
 
-        // Continue traversing children regardless
         foreach (Transform child in current)
         {
             TraverseHierarchy(child, currentPath, dataList);
         }
     }
-
-
 
     public void SaveFromUI()
     {
@@ -156,7 +201,6 @@ public class SpiderTransformManager : MonoBehaviour
         string filePath = Path.Combine(folderPath, name + ".json");
         SaveTransforms(filePath);
     }
-
 
     public void LoadFromUI()
     {
@@ -178,9 +222,6 @@ public class SpiderTransformManager : MonoBehaviour
         }
     }
 
-
-
-
     public void RefreshDropdown()
     {
         string basePath = Path.Combine(Application.dataPath, "JSON files");
@@ -194,14 +235,10 @@ public class SpiderTransformManager : MonoBehaviour
         {
             string name = Path.GetFileNameWithoutExtension(file);
             options.Add(name);
-            Debug.Log("Found config: " + name); // For debug
+            Debug.Log("Found config: " + name);
         }
 
         configDropdown.ClearOptions();
         configDropdown.AddOptions(options);
     }
-
-
-
-
 }

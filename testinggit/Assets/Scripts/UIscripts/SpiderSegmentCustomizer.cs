@@ -2,6 +2,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Drawing;
+using Unity.VisualScripting;
+using Color = UnityEngine.Color;
+using System.Linq;
+
 
 public class SpiderSegmentCustomizer : MonoBehaviour
 {
@@ -12,6 +17,11 @@ public class SpiderSegmentCustomizer : MonoBehaviour
     private string currentSegmentName = "patella";
     private Dictionary<string, GameObject> legRoots = new();
     private List<Toggle> legToggles = new();
+
+    // for color picker
+    private Color lastColor;
+    public FlexibleColorPicker colorPicker;
+
 
     public TMP_Text xValueText;
     public TMP_Text yValueText;
@@ -63,7 +73,10 @@ public class SpiderSegmentCustomizer : MonoBehaviour
     public Cinemachine.CinemachineVirtualCamera cmProsoma;
     public Cinemachine.CinemachineVirtualCamera cmFinishing;
 
-
+    
+    // for launching the spider
+    public GameObject customizationUI; // reference to the parent Panel
+    public GameObject spiderGameMode; // e.g. camera, input scripts, etc.
 
     private Dictionary<string, Color> colorMap = new()
     {
@@ -182,11 +195,34 @@ public class SpiderSegmentCustomizer : MonoBehaviour
             }
         }
 
+
+        //for color picker
+        if (colorPicker != null)
+        {
+            lastColor = colorPicker.color;
+            colorPicker.SetColor(lastColor); //  this line forces the big box to match
+        }
+
+
         //for activating different panels settings
         ShowPanel("baseModel");
 
 
 
+    }
+
+
+    private void Update()
+    {
+        if (colorPicker == null) return;
+
+        Color current = colorPicker.color;
+
+        if (current != lastColor)
+        {
+            lastColor = current;
+            SetColor(current); // this applies color to currentSegment or all selected
+        }
     }
 
     public void SetSegment(string name)
@@ -248,19 +284,66 @@ public class SpiderSegmentCustomizer : MonoBehaviour
     public void SetXScale(float value)
     {
         xValueText.text = value.ToString("F2");
+       
+
         ApplyScale(value, "x");
+        UpdateBodyTargetsToLegTips();
+
+        foreach (var solver in spiderRoot.GetComponentsInChildren<IKSolverGradientDescent>())
+        {
+            foreach (var joint in solver.joints)
+            {
+                joint.RefreshDefaultPos();
+            }
+
+            solver.RefreshCurrentAngles();
+            solver.ForceRecalculate();
+        }
+
+
+
     }
 
     public void SetYScale(float value)
     {
         yValueText.text = value.ToString("F2");
+
+        
         ApplyScale(value, "y");
+        UpdateBodyTargetsToLegTips();
+
+        foreach (var solver in spiderRoot.GetComponentsInChildren<IKSolverGradientDescent>())
+        {
+            foreach (var joint in solver.joints)
+            {
+                joint.RefreshDefaultPos();
+            }
+
+            solver.RefreshCurrentAngles();
+            solver.ForceRecalculate();
+        }
+
     }
 
     public void SetZScale(float value)
     {
         zValueText.text = value.ToString("F2");
+
+        
         ApplyScale(value, "z");
+        UpdateBodyTargetsToLegTips();
+
+        foreach (var solver in spiderRoot.GetComponentsInChildren<IKSolverGradientDescent>())
+        {
+            foreach (var joint in solver.joints)
+            {
+                joint.RefreshDefaultPos(); 
+            }
+
+            solver.RefreshCurrentAngles(); 
+            solver.ForceRecalculate();     
+        }
+
     }
 
 
@@ -417,6 +500,52 @@ public class SpiderSegmentCustomizer : MonoBehaviour
         cmProsoma.Priority = (view == "prosoma") ? 10 : 0;
         cmFinishing.Priority = (view == "finishing") ? 10 : 0;
     }
+
+
+
+    public void LaunchSpider()
+    {
+        Debug.Log("Launching spider! ");
+
+        customizationUI.SetActive(false);     // hide UI
+        //spiderGameMode.SetActive(true);       // show game mode logic
+
+    }
+
+
+
+    private void UpdateBodyTargetsToLegTips()
+    {
+        var allTargets = spiderRoot.GetComponentsInChildren<Transform>(true)
+            .Where(t => t.name.StartsWith("BodyTarget"));
+
+        foreach (var bodyTarget in allTargets)
+        {
+            string targetName = bodyTarget.name; // e.g., BodyTargetL1
+            string legName = targetName.Replace("BodyTarget", "Leg"); // e.g., LegL1
+
+            Transform legRoot = spiderRoot.GetComponentsInChildren<Transform>(true)
+                .FirstOrDefault(t => t.name == legName);
+
+            if (legRoot == null)
+            {
+                Debug.LogWarning($" Leg root not found for {targetName}");
+                continue;
+            }
+
+            Transform tip = legRoot.GetComponentsInChildren<Transform>(true)
+                .FirstOrDefault(t => t.name == "tipRoot" || t.name == "tarsus");
+
+            if (tip != null)
+            {
+                bodyTarget.position = tip.position;
+                bodyTarget.rotation = tip.rotation;
+                Debug.Log($" Moved {bodyTarget.name} to tip of {legName}");
+            }
+        }
+    }
+
+   
 
 
 }

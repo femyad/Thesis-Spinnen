@@ -121,5 +121,11 @@ public class IKJoint : MonoBehaviour
         transform.localEulerAngles = Mathf.Clamp( CurAngle + angle * damping, minAngle, maxAngle ) * axis;
         //transform.Rotate( axis, angle, Space.Self );
     }
-   
+
+    public void RefreshDefaultPos()
+    {
+        defaultPos = transform.localPosition;
+    }
+
+
 }

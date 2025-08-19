@@ -18,6 +18,32 @@ public class GeneralScaler : MonoBehaviour
     }
     private List<ProsomaParts> prosomaParts = new List<ProsomaParts>();
 
+    //prosomaparts
+    // Prosoma external parts
+    private Transform pedipalpLeft;
+    private Transform pedipalpRight;
+    private Transform cheliceraeLeft;
+    private Transform cheliceraeRight;
+    private Transform eyes;
+
+    private Vector3 offsetPedipalpL;
+    private Vector3 offsetPedipalpR;
+    private Vector3 offsetCheliceraeL;
+    private Vector3 offsetCheliceraeR;
+    private Vector3 offsetEyes;
+
+    private Quaternion initialProsomaRotation;
+    private Quaternion initialPedipalpLRot;
+    private Quaternion initialPedipalpRRot;
+    private Quaternion initialCheliceraeLRot;
+    private Quaternion initialCheliceraeRRot;
+    private Quaternion initialEyesRot;
+
+    //lesg parts
+    private Transform[] legTransforms = new Transform[8];
+    private Vector3[] legOffsets = new Vector3[8];
+    private Quaternion[] initialLegRotations = new Quaternion[8];
+
 
 
     //Abdomen references
@@ -34,7 +60,9 @@ public class GeneralScaler : MonoBehaviour
     }
     private List<AbdomenParts> abdomenParts = new List<AbdomenParts>();
 
-
+    //spinnerets
+    private Vector3 spinneretLocalOffset;
+    private Transform spinneretRoot;
 
 
 
@@ -69,7 +97,7 @@ public class GeneralScaler : MonoBehaviour
 
     private class LegChain
     {
-        public Transform coxaRoot, trochanterRoot, femurRoot, patellaRoot, tibiaRoot, metatarsusRoot, tarsusRoot;
+        public Transform coxaRoot, femurRoot, patellaRoot, metatarsusRoot, tarsusRoot, tipRoot;
         public Transform coxa, trochanter, femur, patella, tibia, metatarsus, tarsus;
         public JointOverlapSettings overlap;
     }
@@ -86,6 +114,12 @@ public class GeneralScaler : MonoBehaviour
         InitializeProsoma();
         SetupProsomaParts();
 
+
+        spinneretRoot = abdomenRoot.Find("spinneretRoot");
+        if (abdomen != null && spinneretRoot != null)
+        {
+            spinneretLocalOffset = spinneretRoot.position - abdomen.position;
+        }
         /*if (Application.isPlaying)
         {
             UpdateLegPositions();
@@ -114,6 +148,68 @@ public class GeneralScaler : MonoBehaviour
             part.part.position = prosoma.position + scaledOffset;
         }
 
+        if (prosoma != null)
+        {
+            Vector3 compScale = new Vector3(
+                prosoma.localScale.x * (1 - prosomaOverlapCompensation.x),
+                prosoma.localScale.y * (1 - prosomaOverlapCompensation.y),
+                prosoma.localScale.z * (1 - prosomaOverlapCompensation.z)
+            );
+
+            Quaternion deltaRot = prosoma.rotation * Quaternion.Inverse(initialProsomaRotation);
+            Vector3 pos = prosoma.position;
+
+            if (pedipalpLeft != null)
+            {
+                Vector3 scaled = Vector3.Scale(offsetPedipalpL, compScale);
+                pedipalpLeft.position = pos + prosoma.rotation * scaled;
+                pedipalpLeft.rotation = deltaRot * initialPedipalpLRot;
+            }
+
+            if (pedipalpRight != null)
+            {
+                Vector3 scaled = Vector3.Scale(offsetPedipalpR, compScale);
+                pedipalpRight.position = pos + prosoma.rotation * scaled;
+                pedipalpRight.rotation = deltaRot * initialPedipalpRRot;
+            }
+
+            if (cheliceraeLeft != null)
+            {
+                Vector3 scaled = Vector3.Scale(offsetCheliceraeL, compScale);
+                cheliceraeLeft.position = pos + prosoma.rotation * scaled;
+                cheliceraeLeft.rotation = deltaRot * initialCheliceraeLRot;
+            }
+
+            if (cheliceraeRight != null)
+            {
+                Vector3 scaled = Vector3.Scale(offsetCheliceraeR, compScale);
+                cheliceraeRight.position = pos + prosoma.rotation * scaled;
+                cheliceraeRight.rotation = deltaRot * initialCheliceraeRRot;
+            }
+
+            if (eyes != null)
+            {
+                Vector3 scaled = Vector3.Scale(offsetEyes, compScale);
+                eyes.position = pos + prosoma.rotation * scaled;
+                eyes.rotation = deltaRot * initialEyesRot;
+            }
+
+            for (int i = 0; i < 8; i++)
+            {
+                if (legTransforms[i] == null) continue;
+
+                Vector3 scaledOffset = Vector3.Scale(legOffsets[i], compScale);
+                legTransforms[i].position = prosoma.position + prosoma.rotation * scaledOffset;
+
+                Quaternion deltaRotation = prosoma.rotation * Quaternion.Inverse(initialProsomaRotation);
+                legTransforms[i].rotation = deltaRotation * initialLegRotations[i];
+            }
+
+        }
+
+
+
+
 
         //Abdomen
         Vector3 abdomenCompensatedScale = new Vector3(
@@ -133,6 +229,19 @@ public class GeneralScaler : MonoBehaviour
             part.part.position = abdomen.position + scaledOffset;
         }
 
+        // Sync spinneret position and rotation
+        if (spinneretRoot != null)
+        {
+            Vector3 scaledSpinneretOffset = new Vector3(
+                spinneretLocalOffset.x * abdomenCompensatedScale.x,
+                spinneretLocalOffset.y * abdomenCompensatedScale.y,
+                spinneretLocalOffset.z * abdomenCompensatedScale.z
+            );
+
+            spinneretRoot.position = abdomen.position + abdomen.rotation * scaledSpinneretOffset;
+            spinneretRoot.rotation = abdomen.rotation;
+        }
+
 
 
 
@@ -141,12 +250,13 @@ public class GeneralScaler : MonoBehaviour
         {
             var o = leg.overlap;
 
-            PositionJoint(leg.coxa, leg.coxaRoot, leg.trochanterRoot, o.overlapCoxaToTrochanter, o);
-            PositionJoint(leg.trochanter, leg.trochanterRoot, leg.femurRoot, o.overlapTrochanterToFemur, o);
+            //PositionJoint(leg.coxa, leg.coxaRoot, leg.femurRoot, o.overlapCoxaToTrochanter, o); // will be used together with trochanter
+            PositionJoint(leg.trochanter, leg.coxaRoot, leg.femurRoot, o.overlapTrochanterToFemur, o);
             PositionJoint(leg.femur, leg.femurRoot, leg.patellaRoot, o.overlapFemurToPatella, o);
-            PositionJoint(leg.patella, leg.patellaRoot, leg.tibiaRoot, o.overlapPatellaToTibia, o);
-            PositionJoint(leg.tibia, leg.tibiaRoot, leg.metatarsusRoot, o.overlapTibiaToMetatarsus, o);
+            //PositionJoint(leg.patella, leg.patellaRoot, leg.tibia, o.overlapPatellaToTibia, o); //will be used together with tibia
+            PositionJoint(leg.tibia, leg.patellaRoot, leg.metatarsusRoot, o.overlapTibiaToMetatarsus, o);
             PositionJoint(leg.metatarsus, leg.metatarsusRoot, leg.tarsusRoot, o.overlapMetatarsusToTarsus, o);
+            PositionJoint(leg.tarsus, leg.tarsusRoot, leg.tipRoot, 0f, o); // No overlap past tipRoot
         }
     }
 
@@ -190,10 +300,28 @@ public class GeneralScaler : MonoBehaviour
     {
         allLegs.Clear();
 
-        Transform prosomaRoot = transform.Find("prosomaRoot");
+        /*Transform prosomaRoot = transform.Find("prosomaRoot");
         if (prosomaRoot == null)
         {
             Debug.LogError("Could not find 'prosomaRoot' under " + transform.name);
+            return;
+        }*/
+
+        Transform prosomaRoot = null;
+
+        foreach (Transform t in GetComponentsInChildren<Transform>(true))
+        {
+            if (t.name == "prosomaRoot")
+            {
+                prosomaRoot = t;
+                Debug.LogError(" 'prosomaRoot' found under " + transform.name);
+                break;
+            }
+        }
+
+        if (prosomaRoot == null)
+        {
+            Debug.LogError("Could not find 'prosomaRoot' anywhere under " + transform.name);
             return;
         }
 
@@ -205,27 +333,24 @@ public class GeneralScaler : MonoBehaviour
             if (coxaRoot == null) continue;
 
             var chain = new LegChain();
-
             chain.coxaRoot = coxaRoot;
+
             chain.coxa = coxaRoot.Find("coxa");
-            chain.trochanterRoot = coxaRoot.Find("trochanterRoot");
+            chain.trochanter = coxaRoot.Find("trochanter");
+            chain.femurRoot = coxaRoot.Find("femurRoot");
 
-            chain.trochanter = chain.trochanterRoot.Find("trochanter");
-            chain.femurRoot = chain.trochanterRoot.Find("femurRoot");
+            chain.femur = chain.femurRoot?.Find("femur");
+            chain.patellaRoot = chain.femurRoot?.Find("patellaRoot");
 
-            chain.femur = chain.femurRoot.Find("femur");
-            chain.patellaRoot = chain.femurRoot.Find("patellaRoot");
+            chain.patella = chain.patellaRoot?.Find("patella");
+            chain.tibia = chain.patellaRoot?.Find("tibia");
+            chain.metatarsusRoot = chain.patellaRoot?.Find("metatarsusRoot");
 
-            chain.patella = chain.patellaRoot.Find("patella");
-            chain.tibiaRoot = chain.patellaRoot.Find("tibiaRoot");
+            chain.metatarsus = chain.metatarsusRoot?.Find("metatarsus");
+            chain.tarsusRoot = chain.metatarsusRoot?.Find("tarsusRoot");
 
-            chain.tibia = chain.tibiaRoot.Find("tibia");
-            chain.metatarsusRoot = chain.tibiaRoot.Find("metatarsusRoot");
-
-            chain.metatarsus = chain.metatarsusRoot.Find("metatarsus");
-            chain.tarsusRoot = chain.metatarsusRoot.Find("tarsusRoot");
-
-            chain.tarsus = chain.tarsusRoot.Find("tarsus");
+            chain.tarsus = chain.tarsusRoot?.Find("tarsus");
+            chain.tipRoot = chain.tarsusRoot?.Find("tipRoot");
 
             int legIndex = -1;
             if (child.name.Length >= 5 && int.TryParse(child.name.Substring(4, 1), out legIndex))
@@ -242,6 +367,7 @@ public class GeneralScaler : MonoBehaviour
 
             allLegs.Add(chain);
         }
+
     }
 
     private void InitializeAbdomen() 
@@ -325,4 +451,53 @@ public class GeneralScaler : MonoBehaviour
             });
         }
     }
+
+    public void SetupProsomaAttachments(
+    Transform pedipalpL, Transform pedipalpR,
+    Transform cheliceraeL, Transform cheliceraeR,
+    Transform eyes,
+    Vector3 offsetL, Vector3 offsetR,
+    Vector3 offsetCL, Vector3 offsetCR,
+    Vector3 offsetE,
+    Quaternion prosomaRot,
+    Quaternion rotL, Quaternion rotR,
+    Quaternion rotCL, Quaternion rotCR,
+    Quaternion rotE
+    )
+    {
+        pedipalpLeft = pedipalpL;
+        pedipalpRight = pedipalpR;
+        cheliceraeLeft = cheliceraeL;
+        cheliceraeRight = cheliceraeR;
+        this.eyes = eyes;
+
+        offsetPedipalpL = offsetL;
+        offsetPedipalpR = offsetR;
+        offsetCheliceraeL = offsetCL;
+        offsetCheliceraeR = offsetCR;
+        offsetEyes = offsetE;
+
+        initialProsomaRotation = prosomaRot;
+        initialPedipalpLRot = rotL;
+        initialPedipalpRRot = rotR;
+        initialCheliceraeLRot = rotCL;
+        initialCheliceraeRRot = rotCR;
+        initialEyesRot = rotE;
+    }
+
+    public void SetupLegAttachments(
+    Transform[] legs,
+    Vector3[] offsets,
+    Quaternion[] rotations
+    )
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            legTransforms[i] = legs[i];
+            legOffsets[i] = offsets[i];
+            initialLegRotations[i] = rotations[i];
+        }
+    }
+
+
 }
