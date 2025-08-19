@@ -31,7 +31,7 @@ public class SpiderAllignment : MonoBehaviour
             transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * positionLerpSpeed);
 
             // Calculate rotation aligning up with the terrain normal
-            Quaternion targetRotation = Quaternion.FromToRotation(transform.up, hit.normal) * transform.rotation;
+            Quaternion targetRotation = Quaternion.FromToRotation(transform.up, hit.normal) * transform.rotation; //normal hit gemiddelde nemen? 
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotationLerpSpeed);
         }
     }

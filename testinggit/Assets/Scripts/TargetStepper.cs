@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class TargetStepper : MonoBehaviour
 {
@@ -15,7 +16,11 @@ public class TargetStepper : MonoBehaviour
 
     private Vector3 startPos;
 
-    public Transform legTarget;
+    public Transform legTarget; //body target 
+
+    //navmesh..
+    public float navSampleRadius = 1f;
+    private bool isStepping = false;
 
     
 
@@ -25,7 +30,7 @@ public class TargetStepper : MonoBehaviour
         // StartCoroutine(StepLoop());
     }
 
-    IEnumerator StepLoop()
+    IEnumerator StepLoop() //wordt niet aangeroepen nu! zie start
     {
         // Delay start if needed
         if (startDelay > 0f)
@@ -62,37 +67,71 @@ public class TargetStepper : MonoBehaviour
 
     public void StepToTarget(){
         StartCoroutine(StepToTargetCR());
+        // if (!isStepping)
+        //     StartCoroutine(StepToTargetCR());
     }
 
     private IEnumerator StepToTargetCR()
     {
-        float time = 0f;
-        Vector3 startPos = transform.position;
-        Vector3 targetPos = legTarget.position;
+        isStepping = true;
 
+        Vector3 startPos = transform.position;
+        Vector3 desiredTargetPos = legTarget.position + stepOffset;
+        Vector3 targetPos = desiredTargetPos;
+
+        // Sample nearest point on NavMesh
+        if (NavMesh.SamplePosition(desiredTargetPos, out NavMeshHit hit, navSampleRadius, NavMesh.AllAreas))
+        {
+            targetPos = hit.position;
+        }
+        else
+        {
+            Debug.LogWarning("No valid NavMesh point found near target.");
+            isStepping = false;
+            yield break;
+        }
+
+        float time = 0f;
         while (time < 1f)
         {
             time += Time.deltaTime / stepDuration;
-            float height = Mathf.Sin(time * Mathf.PI) * stepHeight;
-
-            // Raycast up/down 
-            RaycastHit hit;
-            if (Physics.Raycast(legTarget.position + Vector3.up * 2f, Vector3.down, out hit, 100f))
-            {
-                targetPos = hit.point;
-            }
-            else if (Physics.Raycast(legTarget.position + Vector3.down * 2f, Vector3.up, out hit, 100f))
-            {
-                targetPos = hit.point;
-            }
-
-            Vector3 stepPos = Vector3.Lerp(startPos, targetPos, time) + Vector3.up * height;
+            float heightOffset = Mathf.Sin(time * Mathf.PI) * stepHeight;
+            Vector3 stepPos = Vector3.Lerp(startPos, targetPos, time) + Vector3.up * heightOffset;
             transform.position = stepPos;
-
             yield return null;
         }
 
-        transform.position = targetPos; // to ground
+        transform.position = targetPos;
+        isStepping = false;
+
+        // m.b.v. raycasts///////////////////////////////////////////////////////
+        // float time = 0f;
+        // Vector3 startPos = transform.position;
+        // Vector3 targetPos = legTarget.position;
+
+        // while (time < 1f)
+        // {
+        //     time += Time.deltaTime / stepDuration;
+        //     float height = Mathf.Sin(time * Mathf.PI) * stepHeight;
+
+        //     // Raycast up/down 
+        //     RaycastHit hit;
+        //     if (Physics.Raycast(legTarget.position + Vector3.up * 2f, Vector3.down, out hit, 100f))
+        //     {
+        //         targetPos = hit.point;
+        //     }
+        //     else if (Physics.Raycast(legTarget.position + Vector3.down * 2f, Vector3.up, out hit, 100f))
+        //     {
+        //         targetPos = hit.point;
+        //     }
+
+        //     Vector3 stepPos = Vector3.Lerp(startPos, targetPos, time) + Vector3.up * height;
+        //     transform.position = stepPos;
+
+        //     yield return null;
+        // }
+
+        // transform.position = targetPos; // to ground
     }
 
 }

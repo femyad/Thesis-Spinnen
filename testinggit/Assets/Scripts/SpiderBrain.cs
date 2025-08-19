@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class SpiderBrain : MonoBehaviour
 {
+    //Spiderbrain handles when legs need to step based on movement/rotation.
     //leg config://
     public float stepHeight = 0.1f;
     public float stepDuration = 0.2f;
@@ -33,6 +34,10 @@ public class SpiderBrain : MonoBehaviour
 
     private Quaternion previousRotation;
 
+    //idle movement
+    private float idleTimer = 0f;
+    private bool hasIdled = false;
+    public float idleThreshold = 3f; // Time before realigning
 
     public GameObject debugSphere;
 
@@ -44,18 +49,29 @@ public class SpiderBrain : MonoBehaviour
          currentLegGroup = legGroup1;
     }
 
-    // Update is called once per frame
     void Update()
-    {
-        UpdateTargetStepperParameters(stepHeight,stepDuration,dragDuration,pauseTime);
-        float verticalInput = Input.GetAxis("Vertical");   // W/S or Up/Down arrows
-        float horizontalInput = Input.GetAxis("Horizontal"); // A/D or Left/Right arrows
+{
+    UpdateTargetStepperParameters(stepHeight, stepDuration, dragDuration, pauseTime);
+    float verticalInput = Input.GetAxis("Vertical");
+    float horizontalInput = Input.GetAxis("Horizontal");
 
-        if (Mathf.Abs(verticalInput) > 0.01f || Mathf.Abs(horizontalInput) > 0.01f)
+    if (Mathf.Abs(verticalInput) > 0.01f || Mathf.Abs(horizontalInput) > 0.01f)
+    {
+        ProcesMovement(verticalInput, horizontalInput);
+        idleTimer = 0f;
+        hasIdled = false;
+    }
+    else
+    {
+        idleTimer += Time.deltaTime;
+        if (!hasIdled && idleTimer > idleThreshold)
         {
-            ProcesMovement(verticalInput, horizontalInput);
+            TriggerIdleRealign();
+            hasIdled = true;
         }
     }
+}
+
 
     public void UpdateTargetStepperParameters(float stepHeight,float stepDuration,float dragDuration, float pauseTime){
         foreach(TargetStepper targetStepper in targets){
@@ -98,5 +114,14 @@ public class SpiderBrain : MonoBehaviour
         previousPos = transform.position;
         previousRotation = transform.rotation;
      }
+
+    void TriggerIdleRealign()
+    {
+        Debug.Log("Idle for too long — realigning legs.");
+        foreach (TargetStepper stepper in targets)
+        {
+            stepper.StepToTarget();
+        }
+    }
 
 }
