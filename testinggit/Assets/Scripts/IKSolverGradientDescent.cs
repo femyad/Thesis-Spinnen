@@ -233,6 +233,30 @@ public class IKSolverGradientDescent : MonoBehaviour
     }
 
 
+    public void ForceRecalculate()
+    {
+        if (target != null)
+        {
+            InverseKinematics(target.transform.position, angles);
+            Debug.Log($" IK Recalculated for {name}");
+        }
+    }
+
+    public void RefreshCurrentAngles()
+    {
+        angles = new float[joints.Length];
+        for (int i = 0; i < joints.Length; i++)
+        {
+            angles[i] = joints[i].CurAngle;
+        }
+        Debug.Log($" Refreshed joint angles for {name}");
+    }
+
+
+
+
+
+
     #region Debug methods
     //------------------------------------------------------------------------------------------------------------------------------
 
