@@ -1,9 +1,30 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 public class GeneralScaler : MonoBehaviour
 {
+
+    //for saving and loading
+    public class OverlapSet
+    {
+        public string label;
+        public OverlapValue[] overlaps;
+    }
+
+    [System.Serializable]
+    public class OverlapValue
+    {
+        public string name;
+        public float value;
+    }
+    //public Vector3 prosomaOverlapCompensation;
+    //public Vector3 abdomenOverlapCompensation;
+
+    public List<OverlapSet> overlapSets = new List<OverlapSet>();
+
+
     //Prosoma references
     private Transform prosomaRoot;
     private Transform prosoma;
