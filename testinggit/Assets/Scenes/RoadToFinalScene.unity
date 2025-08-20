@@ -677,6 +677,7 @@ GameObject:
   - component: {fileID: 134743930}
   - component: {fileID: 134743933}
   - component: {fileID: 134743934}
+  - component: {fileID: 134743935}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -788,6 +789,24 @@ MonoBehaviour:
   target: {fileID: 6149236452184463686}
   offset: {x: 0, y: 15, z: -15}
   smoothSpeed: 0.125
+--- !u!114 &134743935
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 134743929}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a0bace0f062c81428b178a68b794ada, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  target: {fileID: 6149236452184463686}
+  lookHeight: 1.5
+  localOffset: {x: 0, y: 15, z: -15}
+  positionSmooth: 10
+  rotateWithTarget: 1
+  rotationSmooth: 12
 --- !u!21 &141131837
 Material:
   serializedVersion: 8
