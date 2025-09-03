@@ -127,5 +127,7 @@ public class IKJoint : MonoBehaviour
         defaultPos = transform.localPosition;
     }
 
+  
+
 
 }
