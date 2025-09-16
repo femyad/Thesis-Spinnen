@@ -90,7 +90,7 @@ public class SpiderBrain : MonoBehaviour
         transform.Translate(moveDir, Space.Self);
         float deltaMove = Vector3.Distance (transform.position, previousPos);
         float deltaAngle = Quaternion.Angle(transform.rotation, previousRotation);
-        float rotationToDistanceFactor = 0.12f; // hoe snel optelt voor rotate
+        float rotationToDistanceFactor = 0.12f; // hoe snel optelt voor rotate (weightfactor)
         distTraveled += deltaMove + (deltaAngle * rotationToDistanceFactor);
         distTraveled += deltaMove;
         Debug.Log(distTraveled);
