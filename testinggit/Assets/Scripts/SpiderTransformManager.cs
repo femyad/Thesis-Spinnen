@@ -1,9 +1,9 @@
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using System.IO;
-using System.Linq;
 
 [System.Serializable]
 public class TransformData
@@ -12,9 +12,11 @@ public class TransformData
     public Vector3 position;
     public Quaternion rotation;
     public Vector3 scale;
-
     public string materialName;
     public Color color;
+
+    // mesh round-trip for abdomen, spinnerets, prosoma, eyes, etc.
+    public string meshName;
 }
 
 [System.Serializable]
@@ -23,10 +25,39 @@ public class TransformDataList
     public List<TransformData> items = new List<TransformData>();
 }
 
+[System.Serializable]
+public class GeneralScalerData
+{
+    public Vector3 prosomaCompensation;
+    public Vector3 abdomenCompensation;
+
+    // dynamic list values you already use elsewhere
+    public List<float[]> overlapSets = new List<float[]>();
+
+    // per-set Min Overlap Multiplier (already working)
+    public List<float> minOverlapMultipliers = new List<float>();
+
+    // SAME PATTERN as minOverlapMultipliers: one list per joint, 4 values (Set1..Set4)
+    public List<float> overlapCoxaToTrochanter = new List<float>();
+    public List<float> overlapTrochanterToFemur = new List<float>();
+    public List<float> overlapFemurToPatella = new List<float>();
+    public List<float> overlapPatellaToTibia = new List<float>();
+    public List<float> overlapTibiaToMetatarsus = new List<float>();
+    public List<float> overlapMetatarsusToTarsus = new List<float>();
+}
+
+[System.Serializable]
+public class SpiderSaveData
+{
+    public TransformDataList transformData = new TransformDataList();
+    public GeneralScalerData scalerData = new GeneralScalerData();
+}
+
 public class SpiderTransformManager : MonoBehaviour
 {
     [Header("Spider Config Settings")]
     public string spiderName = "NewSpider";
+    public GeneralScaler generalScaler;
 
     [Header("UI Elements")]
     public TMP_InputField spiderNameInput;
@@ -44,145 +75,242 @@ public class SpiderTransformManager : MonoBehaviour
         RefreshDropdown();
     }
 
+    // ======================= SAVE =======================
     public void SaveTransforms(string savePath)
     {
-        TransformDataList dataList = new TransformDataList();
+        SpiderSaveData fullData = new SpiderSaveData();
 
+        // collect transforms/materials/meshes
         foreach (Transform child in transform)
+            TraverseHierarchy(child, "", fullData.transformData);
+
+        // collect GeneralScaler values
+        if (generalScaler != null)
         {
-            TraverseHierarchy(child, "", dataList);
+            fullData.scalerData.prosomaCompensation = generalScaler.prosomaOverlapCompensation;
+            fullData.scalerData.abdomenCompensation = generalScaler.abdomenOverlapCompensation;
+
+            // dynamic overlap arrays
+            fullData.scalerData.overlapSets.Clear();
+            foreach (var set in generalScaler.overlapSets)
+            {
+                if (set == null || set.overlaps == null) continue;
+                float[] values = new float[set.overlaps.Length];
+                for (int i = 0; i < values.Length; i++)
+                    values[i] = set.overlaps[i].value;
+                fullData.scalerData.overlapSets.Add(values);
+            }
+
+            // per-set Min Overlap Multiplier
+            fullData.scalerData.minOverlapMultipliers.Clear();
+            fullData.scalerData.minOverlapMultipliers.Add(generalScaler.overlapSet1 != null ? generalScaler.overlapSet1.minOverlapMultiplier : 0f);
+            fullData.scalerData.minOverlapMultipliers.Add(generalScaler.overlapSet2 != null ? generalScaler.overlapSet2.minOverlapMultiplier : 0f);
+            fullData.scalerData.minOverlapMultipliers.Add(generalScaler.overlapSet3 != null ? generalScaler.overlapSet3.minOverlapMultiplier : 0f);
+            fullData.scalerData.minOverlapMultipliers.Add(generalScaler.overlapSet4 != null ? generalScaler.overlapSet4.minOverlapMultiplier : 0f);
+
+            // six joint-overlap lists (same pattern as minOverlapMultipliers)
+            fullData.scalerData.overlapCoxaToTrochanter = SaveJoint(j => j.overlapCoxaToTrochanter);
+            fullData.scalerData.overlapTrochanterToFemur = SaveJoint(j => j.overlapTrochanterToFemur);
+            fullData.scalerData.overlapFemurToPatella = SaveJoint(j => j.overlapFemurToPatella);
+            fullData.scalerData.overlapPatellaToTibia = SaveJoint(j => j.overlapPatellaToTibia);
+            fullData.scalerData.overlapTibiaToMetatarsus = SaveJoint(j => j.overlapTibiaToMetatarsus);
+            fullData.scalerData.overlapMetatarsusToTarsus = SaveJoint(j => j.overlapMetatarsusToTarsus);
         }
 
-        string json = JsonUtility.ToJson(dataList, true);
+        string json = JsonUtility.ToJson(fullData, true);
         File.WriteAllText(savePath, json);
 
 #if UNITY_EDITOR
         UnityEditor.AssetDatabase.Refresh();
 #endif
-
         Debug.Log($"Saved spider config to: {savePath}");
     }
 
+    // helper to gather a 4-value list (set1..set4) for a specific joint field
+    private List<float> SaveJoint(System.Func<GeneralScaler.JointOverlapSettings, float> getter)
+    {
+        var list = new List<float>(4);
+        list.Add(generalScaler.overlapSet1 != null ? getter(generalScaler.overlapSet1) : 0f);
+        list.Add(generalScaler.overlapSet2 != null ? getter(generalScaler.overlapSet2) : 0f);
+        list.Add(generalScaler.overlapSet3 != null ? getter(generalScaler.overlapSet3) : 0f);
+        list.Add(generalScaler.overlapSet4 != null ? getter(generalScaler.overlapSet4) : 0f);
+        return list;
+    }
+
+    // ======================= LOAD =======================
     public void LoadTransforms(string jsonText)
     {
-        TransformDataList dataList = JsonUtility.FromJson<TransformDataList>(jsonText);
+        SpiderSaveData fullData = JsonUtility.FromJson<SpiderSaveData>(jsonText);
+        var dataList = fullData.transformData;
 
+        // restore transforms/materials/meshes
         foreach (var data in dataList.items)
         {
-            if (string.IsNullOrEmpty(data.path))
-            {
-                Debug.LogWarning("Empty path detected, skipping.");
-                continue;
-            }
+            if (string.IsNullOrEmpty(data.path)) continue;
 
             Transform target = transform.Find(data.path);
-            if (target != null)
+            if (target == null) continue;
+
+            target.localPosition = data.position;
+            target.localRotation = data.rotation;
+            target.localScale = data.scale;
+
+            // material + color
+            Renderer renderer = target.GetComponent<Renderer>();
+            if (renderer != null)
             {
-                target.localPosition = data.position;
-                target.localRotation = data.rotation;
-                target.localScale = data.scale;
-
-                Renderer renderer = target.GetComponent<Renderer>();
-                if (renderer != null)
+                Material mat = null;
+                if (!string.IsNullOrEmpty(data.materialName))
                 {
-                    Material finalMat = null;
-
-                    if (!string.IsNullOrEmpty(data.materialName))
+                    // try a common folder first
+                    mat = Resources.Load<Material>("SpiderSkinMaterials/" + data.materialName);
+                    if (mat == null)
                     {
-                        finalMat = Resources.Load<Material>("SpiderSkinMaterials/" + data.materialName);
-                        if (finalMat == null)
+                        // search anywhere under Resources
+                        var allMats = Resources.LoadAll<Material>(string.Empty);
+                        foreach (var m in allMats)
                         {
-                            Debug.LogWarning($"Material 'SpiderSkinMaterials/{data.materialName}' not found in Resources.");
+                            if (m != null && m.name == data.materialName) { mat = m; break; }
                         }
                     }
+                }
 
-                    if (finalMat == null)
+                if (mat != null)
+                {
+                    renderer.material = new Material(mat);
+                    if (renderer.material.HasProperty("_Color"))
+                        renderer.material.color = data.color;
+                }
+            }
+
+            // mesh (optional)
+            if (!string.IsNullOrEmpty(data.meshName))
+            {
+                MeshFilter mf = target.GetComponent<MeshFilter>();
+                SkinnedMeshRenderer smr = target.GetComponent<SkinnedMeshRenderer>();
+                Mesh current = mf ? mf.sharedMesh : (smr ? smr.sharedMesh : null);
+
+                if (current == null || current.name != data.meshName)
+                {
+                    Mesh loaded = TryLoadMeshByName(data.meshName);
+                    if (loaded != null)
                     {
-                        finalMat = Resources.Load<Material>("SpiderSkinMaterials/Fallback_Mat");
-                        Debug.LogWarning($"Using fallback material for {data.path}");
+                        if (mf) mf.sharedMesh = loaded;
+                        if (smr) smr.sharedMesh = loaded;
                     }
-
-                    if (finalMat != null)
+                    else
                     {
-                        renderer.material = new Material(finalMat);
-                        if (renderer.material.HasProperty("_Color"))
-                        {
-                            renderer.material.color = data.color;
-                        }
-
-                        Debug.Log($"Applied material: {renderer.material.name} with color {renderer.material.color}");
+                        Debug.LogWarning($"[{name}] Could not find mesh '{data.meshName}' for '{data.path}'.");
                     }
                 }
             }
-            else
+        }
+
+        // restore GeneralScaler values
+        if (generalScaler != null && fullData.scalerData != null)
+        {
+            generalScaler.prosomaOverlapCompensation = fullData.scalerData.prosomaCompensation;
+            generalScaler.abdomenOverlapCompensation = fullData.scalerData.abdomenCompensation;
+
+            // dynamic list values
+            for (int i = 0; i < generalScaler.overlapSets.Count; i++)
             {
-                Debug.LogWarning($"Transform not found: {data.path}");
+                if (i < fullData.scalerData.overlapSets.Count)
+                {
+                    float[] values = fullData.scalerData.overlapSets[i];
+                    for (int j = 0; j < values.Length && j < generalScaler.overlapSets[i].overlaps.Length; j++)
+                        generalScaler.overlapSets[i].overlaps[j].value = values[j];
+                }
             }
+
+            // per-set Min Overlap Multiplier
+            var mins = fullData.scalerData.minOverlapMultipliers;
+            if (mins != null)
+            {
+                if (generalScaler.overlapSet1 != null && mins.Count > 0) generalScaler.overlapSet1.minOverlapMultiplier = mins[0];
+                if (generalScaler.overlapSet2 != null && mins.Count > 1) generalScaler.overlapSet2.minOverlapMultiplier = mins[1];
+                if (generalScaler.overlapSet3 != null && mins.Count > 2) generalScaler.overlapSet3.minOverlapMultiplier = mins[2];
+                if (generalScaler.overlapSet4 != null && mins.Count > 3) generalScaler.overlapSet4.minOverlapMultiplier = mins[3];
+            }
+
+            // six joint-overlap lists (same pattern as minOverlapMultipliers)
+            ApplyJointList(fullData.scalerData.overlapCoxaToTrochanter, (s, v) => s.overlapCoxaToTrochanter = v);
+            ApplyJointList(fullData.scalerData.overlapTrochanterToFemur, (s, v) => s.overlapTrochanterToFemur = v);
+            ApplyJointList(fullData.scalerData.overlapFemurToPatella, (s, v) => s.overlapFemurToPatella = v);
+            ApplyJointList(fullData.scalerData.overlapPatellaToTibia, (s, v) => s.overlapPatellaToTibia = v);
+            ApplyJointList(fullData.scalerData.overlapTibiaToMetatarsus, (s, v) => s.overlapTibiaToMetatarsus = v);
+            ApplyJointList(fullData.scalerData.overlapMetatarsusToTarsus, (s, v) => s.overlapMetatarsusToTarsus = v);
         }
 
         Debug.Log("Spider settings loaded successfully!");
     }
 
+    // set1..set4 from a single list; mirrors minOverlapMultipliers behavior
+    private void ApplyJointList(List<float> values, System.Action<GeneralScaler.JointOverlapSettings, float> setter)
+    {
+        if (values == null) return;
+
+        if (generalScaler.overlapSet1 != null && values.Count > 0) setter(generalScaler.overlapSet1, values[0]);
+        if (generalScaler.overlapSet2 != null && values.Count > 1) setter(generalScaler.overlapSet2, values[1]);
+        if (generalScaler.overlapSet3 != null && values.Count > 2) setter(generalScaler.overlapSet3, values[2]);
+        if (generalScaler.overlapSet4 != null && values.Count > 3) setter(generalScaler.overlapSet4, values[3]);
+    }
+
+    // ======================= HELPERS =======================
     private void TraverseHierarchy(Transform current, string path, TransformDataList dataList)
     {
         string currentPath = string.IsNullOrEmpty(path) ? current.name : path + "/" + current.name;
 
-        bool hasMesh = current.GetComponent<MeshRenderer>() != null || current.GetComponent<SkinnedMeshRenderer>() != null;
-
-        if (hasMesh)
+        Renderer renderer = current.GetComponent<Renderer>();
+        if (renderer != null)
         {
-            TransformData data = new TransformData
+            // material snapshot
+            Material mat = renderer.sharedMaterial;
+            string matName = mat != null ? mat.name.Replace(" (Instance)", "") : "";
+            Color col = mat != null && mat.HasProperty("_Color") ? mat.color : Color.white;
+
+            // mesh snapshot
+            string meshName = "";
+            MeshFilter mf = current.GetComponent<MeshFilter>();
+            if (mf != null && mf.sharedMesh != null) meshName = mf.sharedMesh.name;
+            SkinnedMeshRenderer smr = current.GetComponent<SkinnedMeshRenderer>();
+            if (string.IsNullOrEmpty(meshName) && smr != null && smr.sharedMesh != null) meshName = smr.sharedMesh.name;
+
+            dataList.items.Add(new TransformData
             {
                 path = currentPath,
                 position = current.localPosition,
                 rotation = current.localRotation,
-                scale = current.localScale
-            };
-
-            Renderer renderer = current.GetComponent<Renderer>();
-            if (renderer != null)
-            {
-                Material mat = renderer.sharedMaterial;
-
-#if UNITY_EDITOR
-                if (mat != null)
-                {
-                    string assetPath = UnityEditor.AssetDatabase.GetAssetPath(mat);
-
-                    if (assetPath.Contains("unity_builtin_extra") || mat.name == "Default-Material")
-                    {
-                        Debug.Log($"Skipping built-in or default material on {current.name}");
-                        data.materialName = "";
-                    }
-                    else
-                    {
-                        string fileName = Path.GetFileNameWithoutExtension(assetPath);
-                        data.materialName = fileName;
-                        Debug.Log($"Saving material '{fileName}' on {current.name}");
-                    }
-                }
-                else
-                {
-                    data.materialName = "";
-                }
-#else
-                data.materialName = mat != null ? mat.name.Replace(" (Instance)", "") : "";
-#endif
-
-                if (renderer.sharedMaterial != null && renderer.sharedMaterial.HasProperty("_Color"))
-                    data.color = renderer.sharedMaterial.color;
-                else
-                    data.color = Color.white;
-            }
-
-            dataList.items.Add(data);
+                scale = current.localScale,
+                materialName = matName,
+                color = col,
+                meshName = meshName
+            });
         }
 
         foreach (Transform child in current)
-        {
             TraverseHierarchy(child, currentPath, dataList);
-        }
     }
+
+    private Mesh TryLoadMeshByName(string meshName)
+    {
+        if (string.IsNullOrEmpty(meshName)) return null;
+
+        // try common folder first
+        Mesh m = Resources.Load<Mesh>("SpiderMeshes/" + meshName);
+        if (m != null) return m;
+
+        // fallback: search all meshes in Resources
+        var all = Resources.LoadAll<Mesh>(string.Empty);
+        for (int i = 0; i < all.Length; i++)
+            if (all[i] != null && all[i].name == meshName)
+                return all[i];
+
+        return null;
+    }
+
+    // ======================= UI — with "settings" folder structure =======================
+    
 
     public void SaveFromUI()
     {
