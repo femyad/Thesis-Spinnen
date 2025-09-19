@@ -12,7 +12,7 @@ public class IKSolverGradientDescent : MonoBehaviour
     private float distanceThreshold = 0.01f;       //The distance to target threshold to stop updating the IK chain
     private int maxIterations = 100;             //The maximum number of iterations to get to the target
 
-    private float[] angles; //= new float[] { 26, 90, -69, 95, 0, 62, -48, 0 };   //the current angles of the joins in this chain
+    private float[] angles; //= new float[] { 26, 90, -69, 95, 0, 62, -48, 0 };   //the current angles of the joints in this chain
     
 
     /// <summary>

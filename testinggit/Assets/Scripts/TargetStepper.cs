@@ -30,7 +30,7 @@ public class TargetStepper : MonoBehaviour
         // StartCoroutine(StepLoop());
     }
 
-    IEnumerator StepLoop() //wordt niet aangeroepen nu! zie start
+    IEnumerator StepLoop() //wordt niet aangeroepen nu! 
     {
         // Delay start if needed
         if (startDelay > 0f)
