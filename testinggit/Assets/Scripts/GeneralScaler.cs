@@ -3,39 +3,49 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 
+
+/// <summary>
+/// GeneralScaler is responsible for scaling and repositioning different body parts of the spider model,
+/// including the prosoma, abdomen, spinnerets, and legs. It ensures that attached parts stay aligned and
+/// properly overlap when the model is scaled.
+/// </summary>
+
 public class GeneralScaler : MonoBehaviour
 {
 
-    //for saving and loading
+    /// <summary>
+    /// Defines a group of overlap settings saved by a label. Used for saving/loading multiple configurations.
+    /// </summary>
     public class OverlapSet
     {
         public string label;
         public OverlapValue[] overlaps;
     }
 
+    /// <summary>
+    /// Stores an individual overlap value with a name.
+    /// </summary>
     [System.Serializable]
     public class OverlapValue
     {
         public string name;
         public float value;
     }
-    //public Vector3 prosomaOverlapCompensation;
-    //public Vector3 abdomenOverlapCompensation;
 
     public List<OverlapSet> overlapSets = new List<OverlapSet>();
 
 
-    //Prosoma references
-    private Transform prosomaRoot;
-    private Transform prosoma;
+    //================= PROSOMA references =================//
+    private Transform prosomaRoot; // Root node of prosoma
+    private Transform prosoma; // Main prosoma body
 
     [Header("Prosoma Scaling Compensation")]
-    public Vector3 prosomaOverlapCompensation = Vector3.zero;
+    public Vector3 prosomaOverlapCompensation = Vector3.zero; // Compensation values to avoid overlap after scaling
 
     private class ProsomaParts
     {
         public Transform part;
-        public Vector3 originalOffsetFromPivot;
+        public Vector3 originalOffsetFromPivot; // Distance from prosoma center at initialization
     }
     private List<ProsomaParts> prosomaParts = new List<ProsomaParts>();
 
@@ -47,12 +57,15 @@ public class GeneralScaler : MonoBehaviour
     private Transform cheliceraeRight;
     private Transform eyes;
 
+    // Initial offsets of external parts from prosoma
     private Vector3 offsetPedipalpL;
     private Vector3 offsetPedipalpR;
     private Vector3 offsetCheliceraeL;
     private Vector3 offsetCheliceraeR;
     private Vector3 offsetEyes;
 
+
+    // Initial rotations for external parts
     private Quaternion initialProsomaRotation;
     private Quaternion initialPedipalpLRot;
     private Quaternion initialPedipalpRRot;
@@ -60,19 +73,20 @@ public class GeneralScaler : MonoBehaviour
     private Quaternion initialCheliceraeRRot;
     private Quaternion initialEyesRot;
 
-    //lesg parts
+    // Leg attachment points on prosoma
     private Transform[] legTransforms = new Transform[8];
     private Vector3[] legOffsets = new Vector3[8];
     private Quaternion[] initialLegRotations = new Quaternion[8];
 
 
 
-    //Abdomen references
+
+    //================= ABDOMEN =================//
     private Transform abdomenRoot;
     private Transform abdomen;
 
     [Header("Absomen Scaling Compensation")]
-    public Vector3 abdomenOverlapCompensation = Vector3.zero;
+    public Vector3 abdomenOverlapCompensation = Vector3.zero; // Compensation values to avoid overlap after scaling
 
     private class AbdomenParts
     {
@@ -82,12 +96,17 @@ public class GeneralScaler : MonoBehaviour
     private List<AbdomenParts> abdomenParts = new List<AbdomenParts>();
 
     //spinnerets
-    private Vector3 spinneretLocalOffset;
+    private Vector3 spinneretLocalOffset; // Distance from abdomen center
     private Transform spinneretRoot;
 
 
 
-    //Leg references
+
+    //================= LEG SETTINGS =================//
+
+    /// <summary>
+    /// Overlap values for each joint of the leg chain. Controls how much segments overlap when scaled.
+    /// </summary>
     [System.Serializable]
     public class JointOverlapSettings
     {
@@ -116,6 +135,10 @@ public class GeneralScaler : MonoBehaviour
     [Header("Joint overlap settings for LegL4 and LegR4")]
     public JointOverlapSettings overlapSet4;
 
+
+    /// <summary>
+    /// Represents the full chain of a spider leg with references to each segment and its overlap settings.
+    /// </summary>
     private class LegChain
     {
         public Transform coxaRoot, femurRoot, patellaRoot, metatarsusRoot, tarsusRoot, tipRoot;
@@ -126,6 +149,9 @@ public class GeneralScaler : MonoBehaviour
     private List<LegChain> allLegs = new List<LegChain>();
     private Dictionary<Transform, float> previousScales = new Dictionary<Transform, float>();
 
+
+
+    //================= UNITY METHODS =================//
 
     void Start()
     {
@@ -141,23 +167,22 @@ public class GeneralScaler : MonoBehaviour
         {
             spinneretLocalOffset = spinneretRoot.position - abdomen.position;
         }
-        /*if (Application.isPlaying)
-        {
-            UpdateLegPositions();
-        }*/
     }
 
-    //[ContextMenu("Update Leg Positions")]
+    
     void LateUpdate()
     {
 
-        //Prosoma
+        //=========Prosoma scaling =========//
+
+        // Apply scaling compensation for prosoma
         Vector3 prosomaCompensatedScale = new Vector3(
            prosoma.localScale.x * (1 - prosomaOverlapCompensation.x),
            prosoma.localScale.y * (1 - prosomaOverlapCompensation.y),
            prosoma.localScale.z * (1 - prosomaOverlapCompensation.z)
        );
 
+        // Update all prosoma child parts
         foreach (var part in prosomaParts)
         {
             Vector3 scaledOffset = new Vector3(
@@ -171,6 +196,7 @@ public class GeneralScaler : MonoBehaviour
 
         if (prosoma != null)
         {
+            // Apply compensation and rotation to prosoma attachments (pedipalps, chelicerae, eyes, legs)
             Vector3 compScale = new Vector3(
                 prosoma.localScale.x * (1 - prosomaOverlapCompensation.x),
                 prosoma.localScale.y * (1 - prosomaOverlapCompensation.y),
@@ -215,6 +241,7 @@ public class GeneralScaler : MonoBehaviour
                 eyes.rotation = deltaRot * initialEyesRot;
             }
 
+            //Legs
             for (int i = 0; i < 8; i++)
             {
                 if (legTransforms[i] == null) continue;
@@ -232,7 +259,7 @@ public class GeneralScaler : MonoBehaviour
 
 
 
-        //Abdomen
+        //====== Abdomen scaling and part updates======//
         Vector3 abdomenCompensatedScale = new Vector3(
             abdomen.localScale.x * (1 - abdomenOverlapCompensation.x),
             abdomen.localScale.y * (1 - abdomenOverlapCompensation.y),
@@ -266,7 +293,7 @@ public class GeneralScaler : MonoBehaviour
 
 
 
-        //Legs
+        //Update all legs
         foreach (var leg in allLegs)
         {
             var o = leg.overlap;
@@ -282,6 +309,9 @@ public class GeneralScaler : MonoBehaviour
     }
 
 
+    /// <summary>
+    /// Updates a joint’s position based on scaling difference and overlap values.
+    /// </summary>
     private void PositionJoint(Transform mesh, Transform currentRoot, Transform nextRoot, float baseOverlap, JointOverlapSettings settings)
     {
 
@@ -294,9 +324,10 @@ public class GeneralScaler : MonoBehaviour
         float delta = safeScale - previousScale;
         float overlap = AdjustedOverlap(baseOverlap, settings.minOverlapMultiplier, safeScale, settings.overlapExponent);
 
+        // Calculate offset in local right direction
         Vector3 offset = currentRoot.TransformDirection(Vector3.right) * (delta + overlap);
 
-        // Validate offset to avoid NaN or Infinity
+        // Skip if offset is invalid
         if (float.IsNaN(offset.x) || float.IsInfinity(offset.x) ||
             float.IsNaN(offset.y) || float.IsInfinity(offset.y) ||
             float.IsNaN(offset.z) || float.IsInfinity(offset.z))
@@ -310,26 +341,26 @@ public class GeneralScaler : MonoBehaviour
         previousScales[mesh] = safeScale;
     }
 
+
+    /// <summary>
+    /// Applies nonlinear adjustment to overlap based on scale and exponent.
+    /// </summary>
     private float AdjustedOverlap(float baseOverlap, float minMultiplier, float currentScale, float exponent)
     {
         float nonlinearScale = Mathf.Pow(currentScale, exponent);
         return baseOverlap * minMultiplier * nonlinearScale;
     }
 
-
+    /// <summary>
+    /// Finds all legs under prosomaRoot and builds their bone chain.
+    /// </summary>
     private void InitializeLegs()
     {
         allLegs.Clear();
 
-        /*Transform prosomaRoot = transform.Find("prosomaRoot");
-        if (prosomaRoot == null)
-        {
-            Debug.LogError("Could not find 'prosomaRoot' under " + transform.name);
-            return;
-        }*/
-
         Transform prosomaRoot = null;
 
+        // Search for prosomaRoot transform
         foreach (Transform t in GetComponentsInChildren<Transform>(true))
         {
             if (t.name == "prosomaRoot")
@@ -346,6 +377,8 @@ public class GeneralScaler : MonoBehaviour
             return;
         }
 
+
+        // Build leg chain for each Leg child
         foreach (Transform child in prosomaRoot)
         {
             if (!child.name.StartsWith("Leg")) continue;
@@ -373,6 +406,7 @@ public class GeneralScaler : MonoBehaviour
             chain.tarsus = chain.tarsusRoot?.Find("tarsus");
             chain.tipRoot = chain.tarsusRoot?.Find("tipRoot");
 
+            // Match overlap set to leg index
             int legIndex = -1;
             if (child.name.Length >= 5 && int.TryParse(child.name.Substring(4, 1), out legIndex))
             {
@@ -391,6 +425,10 @@ public class GeneralScaler : MonoBehaviour
 
     }
 
+
+    /// <summary>
+    /// Finds abdomen root and abdomen transforms by name.
+    /// </summary>
     private void InitializeAbdomen() 
     {
         // Automatically find the abdomenRoot and abdomen by name
@@ -410,6 +448,9 @@ public class GeneralScaler : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Finds prosoma root and prosoma transforms by name.
+    /// </summary>
     private void InitializeProsoma()
     {
         // Automatically find the prosomaRoot and prosoma by name
@@ -429,6 +470,10 @@ public class GeneralScaler : MonoBehaviour
         }
     }
 
+
+    /// <summary>
+    /// Records abdomen child parts and their initial offsets.
+    /// </summary>
     private void SetupAbdomenParts()
     {
         if (abdomenRoot == null || abdomen == null)
@@ -451,6 +496,10 @@ public class GeneralScaler : MonoBehaviour
         }
     }
 
+
+    /// <summary>
+    /// Records prosoma child parts and their initial offsets.
+    /// </summary>
     private void SetupProsomaParts()
     {
         if (prosomaRoot == null || prosoma == null)
@@ -473,6 +522,10 @@ public class GeneralScaler : MonoBehaviour
         }
     }
 
+
+    /// <summary>
+    /// Sets up prosoma attachments (pedipalps, chelicerae, eyes) with initial offsets and rotations.
+    /// </summary>
     public void SetupProsomaAttachments(
     Transform pedipalpL, Transform pedipalpR,
     Transform cheliceraeL, Transform cheliceraeR,
@@ -506,6 +559,8 @@ public class GeneralScaler : MonoBehaviour
         initialEyesRot = rotE;
     }
 
+
+    // sets up leg attachment points with initial offsets and rotations
     public void SetupLegAttachments(
     Transform[] legs,
     Vector3[] offsets,

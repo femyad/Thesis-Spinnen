@@ -5,26 +5,38 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+
+//
+// ====== DATA CLASSES ======
+//
+
+
+// Stores transform, material, color, and mesh info for one object
 [System.Serializable]
 public class TransformData
 {
-    public string path;
-    public Vector3 position;
-    public Quaternion rotation;
-    public Vector3 scale;
-    public string materialName;
-    public Color color;
+    public string path; // hierarchy path from root( used for finding the object again)
+    public Vector3 position; // local position
+    public Quaternion rotation; // local rotation
+    public Vector3 scale; //local scale
+    public string materialName; //material reference
+    public Color color; //material color
 
-    // mesh round-trip for abdomen, spinnerets, prosoma, eyes, etc.
+    // mesh reference for abdomen, spinnerets, prosoma, eyes, etc.
     public string meshName;
 }
 
+
+// Holds a list of TransformData objects
 [System.Serializable]
 public class TransformDataList
 {
     public List<TransformData> items = new List<TransformData>();
 }
 
+
+
+// Stores scaling compensation and overlap settings from GeneralScaler
 [System.Serializable]
 public class GeneralScalerData
 {
@@ -46,6 +58,9 @@ public class GeneralScalerData
     public List<float> overlapMetatarsusToTarsus = new List<float>();
 }
 
+
+
+// Root save data that contains both transform and scaler data
 [System.Serializable]
 public class SpiderSaveData
 {
@@ -53,6 +68,19 @@ public class SpiderSaveData
     public GeneralScalerData scalerData = new GeneralScalerData();
 }
 
+
+
+//
+// ====== MAIN CLASS ======
+//
+
+/// <summary>
+/// Handles saving and loading of spider configurations:
+/// - Saves hierarchy transforms, materials, meshes
+/// - Saves GeneralScaler settings
+/// - Supports loading configs back into the scene
+/// - Provides UI integration for save/load
+/// </summary>
 public class SpiderTransformManager : MonoBehaviour
 {
     [Header("Spider Config Settings")]
@@ -68,14 +96,18 @@ public class SpiderTransformManager : MonoBehaviour
 
     void Start()
     {
+        // Bind UI buttons to methods
         if (saveButton != null) saveButton.onClick.AddListener(SaveFromUI);
         if (loadButton != null) loadButton.onClick.AddListener(LoadFromUI);
         if (refreshButton != null) refreshButton.onClick.AddListener(RefreshDropdown);
 
-        RefreshDropdown();
+        RefreshDropdown(); // fill dropdown at start
     }
 
     // ======================= SAVE =======================
+    /// <summary>
+    /// Saves hierarchy transforms, materials, meshes, and GeneralScaler settings into a JSON file.
+    /// </summary>
     public void SaveTransforms(string savePath)
     {
         SpiderSaveData fullData = new SpiderSaveData();
@@ -117,6 +149,7 @@ public class SpiderTransformManager : MonoBehaviour
             fullData.scalerData.overlapMetatarsusToTarsus = SaveJoint(j => j.overlapMetatarsusToTarsus);
         }
 
+        // write to file
         string json = JsonUtility.ToJson(fullData, true);
         File.WriteAllText(savePath, json);
 
@@ -138,6 +171,9 @@ public class SpiderTransformManager : MonoBehaviour
     }
 
     // ======================= LOAD =======================
+    /// <summary>
+    /// Loads hierarchy transforms, materials, meshes, and GeneralScaler settings from JSON text.
+    /// </summary>
     public void LoadTransforms(string jsonText)
     {
         SpiderSaveData fullData = JsonUtility.FromJson<SpiderSaveData>(jsonText);
@@ -257,6 +293,10 @@ public class SpiderTransformManager : MonoBehaviour
     }
 
     // ======================= HELPERS =======================
+
+    /// <summary>
+    /// Recursively traverses hierarchy to collect transform, material, and mesh data.
+    /// </summary>
     private void TraverseHierarchy(Transform current, string path, TransformDataList dataList)
     {
         string currentPath = string.IsNullOrEmpty(path) ? current.name : path + "/" + current.name;
@@ -292,6 +332,9 @@ public class SpiderTransformManager : MonoBehaviour
             TraverseHierarchy(child, currentPath, dataList);
     }
 
+    /// <summary>
+    /// Attempts to load a mesh from Resources by name.
+    /// </summary>
     private Mesh TryLoadMeshByName(string meshName)
     {
         if (string.IsNullOrEmpty(meshName)) return null;
@@ -309,9 +352,15 @@ public class SpiderTransformManager : MonoBehaviour
         return null;
     }
 
-    // ======================= UI — with "settings" folder structure =======================
-    
 
+
+    // ======================= UI — with "settings" folder structure =======================
+
+
+    /// <summary>
+    /// Saves configuration from UI input (spider name).
+    /// Creates folder and writes JSON file.
+    /// </summary>
     public void SaveFromUI()
     {
         string name = spiderNameInput.text;
@@ -330,6 +379,9 @@ public class SpiderTransformManager : MonoBehaviour
         SaveTransforms(filePath);
     }
 
+    /// <summary>
+    /// Loads selected configuration from UI dropdown.
+    /// </summary>
     public void LoadFromUI()
     {
         if (configDropdown.options.Count == 0) return;
@@ -350,6 +402,9 @@ public class SpiderTransformManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Refreshes dropdown list by scanning JSON config files.
+    /// </summary>
     public void RefreshDropdown()
     {
         string basePath = Path.Combine(Application.dataPath, "JSON files");

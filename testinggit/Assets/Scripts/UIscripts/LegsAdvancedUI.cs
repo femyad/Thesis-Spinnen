@@ -2,10 +2,18 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+
+/// <summary>
+/// Handles the advanced customization UI for spider legs:
+/// - Switches between basic and advanced legs panels
+/// - Allows editing of joint overlap settings per leg pair (L1R1, L2R2, L3R3, L4R4)
+/// - Syncs sliders to GeneralScaler values
+/// - Supports resetting to default values
+/// </summary>
 public class LegsAdvancedUI : MonoBehaviour
 {
     [Header("References")]
-    public GeneralScaler generalScaler;   // drag RoadToFinalSpider (with GeneralScaler) here
+    public GeneralScaler generalScaler;   // drag FinalSpider(2) (with GeneralScaler) here
     public GameObject panelLegs;          // base legs panel container
     public GameObject panelLegs2;         // advanced legs panel (child of panelLegs, initially inactive)
 
@@ -20,9 +28,9 @@ public class LegsAdvancedUI : MonoBehaviour
     public Color inactiveLegSetColor = new Color(0.5f, 0.5f, 0.5f, 1f);
 
     [Header("Advanced Legs Nav Buttons")]
-    public Button buttonLegsAdvanced;     // on base panel: “More Legs settings”
-    public Button buttonLegsBack;         // on Panel_Legs2: “Back”
-    public Button buttonLegsDefault;      // on Panel_Legs2: “BaseModel Default”
+    public Button buttonLegsAdvanced;     // on base panel: “More Legs settings”, to show advanced panel
+    public Button buttonLegsBack;         // on Panel_Legs2: “Back”, to return to base panel
+    public Button buttonLegsDefault;      // on Panel_Legs2: “BaseModel Default”, to reset to defaults values
 
     [Header("Overlap Sliders + Values")]
     public Slider sCoxaTrochanter; public TMP_Text vCoxaTrochanter;
@@ -33,7 +41,7 @@ public class LegsAdvancedUI : MonoBehaviour
     public Slider sMetatarsusTarsus; public TMP_Text vMetatarsusTarsus;
     public Slider sOverlapMultiplier; public TMP_Text vOverlapMultiplier; // maps to minOverlapMultiplier
 
-    // live pointers to GeneralScaler’s sets
+    // References to overlap settings in GeneralScaler
     private GeneralScaler.JointOverlapSettings[] legSets = new GeneralScaler.JointOverlapSettings[4];
     // snapshot taken on Start() for reset
     private GeneralScaler.JointOverlapSettings[] legSetsDefaults = new GeneralScaler.JointOverlapSettings[4];
@@ -49,7 +57,7 @@ public class LegsAdvancedUI : MonoBehaviour
             return;
         }
 
-        // wire the sets
+        // Wire up leg sets from GeneralScaler
         legSets[0] = generalScaler.overlapSet1;
         legSets[1] = generalScaler.overlapSet2;
         legSets[2] = generalScaler.overlapSet3;
@@ -58,17 +66,18 @@ public class LegsAdvancedUI : MonoBehaviour
         // snapshot defaults
         for (int i = 0; i < 4; i++) legSetsDefaults[i] = CopySet(legSets[i]);
 
-        // buttons
+        // Setup navigation buttons
         if (buttonLegsAdvanced) buttonLegsAdvanced.onClick.AddListener(ShowAdvancedLegsPanel);
         if (buttonLegsBack) buttonLegsBack.onClick.AddListener(ReturnToBasicLegsPanel);
         if (buttonLegsDefault) buttonLegsDefault.onClick.AddListener(ResetCurrentLegSetToDefault);
 
+        // Setup leg pair buttons
         if (buttonSet1_L1R1) buttonSet1_L1R1.onClick.AddListener(() => SelectLegSet(0));
         if (buttonSet2_L2R2) buttonSet2_L2R2.onClick.AddListener(() => SelectLegSet(1));
         if (buttonSet3_L3R3) buttonSet3_L3R3.onClick.AddListener(() => SelectLegSet(2));
         if (buttonSet4_L4R4) buttonSet4_L4R4.onClick.AddListener(() => SelectLegSet(3));
 
-        // sliders -> write-through to active set (ignore exponent per your instruction)
+        // Setup sliders (directly write values into active leg set)
         sCoxaTrochanter.onValueChanged.AddListener(v => { legSets[currentLegSetIndex].overlapCoxaToTrochanter = v; vCoxaTrochanter.text = v.ToString("F2"); });
         sTrochanterFemur.onValueChanged.AddListener(v => { legSets[currentLegSetIndex].overlapTrochanterToFemur = v; vTrochanterFemur.text = v.ToString("F2"); });
         sFemurPatella.onValueChanged.AddListener(v => { legSets[currentLegSetIndex].overlapFemurToPatella = v; vFemurPatella.text = v.ToString("F2"); });
@@ -83,6 +92,10 @@ public class LegsAdvancedUI : MonoBehaviour
     }
 
     // -------------------- UI Flow --------------------
+
+    /// <summary>
+    /// Switches to advanced legs panel (hides other children in base panel).
+    /// </summary>
     public void ShowAdvancedLegsPanel()
     {
         if (!panelLegs || !panelLegs2) return;
@@ -91,6 +104,10 @@ public class LegsAdvancedUI : MonoBehaviour
         panelLegs2.SetActive(true);
     }
 
+
+    /// <summary>
+    /// Returns to basic legs panel (restores all children and hides advanced panel).
+    /// </summary>
     public void ReturnToBasicLegsPanel()
     {
         if (!panelLegs || !panelLegs2) return;
@@ -100,6 +117,10 @@ public class LegsAdvancedUI : MonoBehaviour
     }
 
     // ---------------- Leg-set selection ----------------
+
+    /// <summary>
+    /// Selects a leg set (L1R1..L4R4) and updates UI.
+    /// </summary>
     private void SelectLegSet(int index)
     {
         currentLegSetIndex = Mathf.Clamp(index, 0, 3);
@@ -107,6 +128,10 @@ public class LegsAdvancedUI : MonoBehaviour
         SyncLegOverlapUIFromSet();
     }
 
+
+    /// <summary>
+    /// Updates button colors based on active leg set.
+    /// </summary>
     private void RefreshLegSetButtons()
     {
         Paint(buttonSet1_L1R1, currentLegSetIndex == 0);
@@ -123,6 +148,10 @@ public class LegsAdvancedUI : MonoBehaviour
     }
 
     // -------------- Sync UI from set (no events) --------------
+
+    /// <summary>
+    /// Updates slider values and text fields to match the currently selected leg set.
+    /// </summary>
     private void SyncLegOverlapUIFromSet()
     {
         var set = legSets[currentLegSetIndex];
@@ -137,6 +166,10 @@ public class LegsAdvancedUI : MonoBehaviour
     }
 
     // ---------------- Reset to defaults ----------------
+
+    /// <summary>
+    /// Resets current leg set values back to snapshot defaults.
+    /// </summary>
     public void ResetCurrentLegSetToDefault()
     {
         var def = legSetsDefaults[currentLegSetIndex];
@@ -154,6 +187,10 @@ public class LegsAdvancedUI : MonoBehaviour
     }
 
     // ---------------- Util ----------------
+
+    /// <summary>
+    /// Creates a copy of a JointOverlapSettings object (used for defaults).
+    /// </summary>
     private static GeneralScaler.JointOverlapSettings CopySet(GeneralScaler.JointOverlapSettings src)
     {
         var dst = new GeneralScaler.JointOverlapSettings();

@@ -8,30 +8,35 @@ using Color = UnityEngine.Color;
 using System.Linq;
 
 
+
+/// <summary>
+/// Handles the customization of spider body segments (scaling, color, material, panels, UI).
+/// Supports per-segment, per-leg, or apply-to-all customization, with UI and camera integration.
+/// </summary>
 public class SpiderSegmentCustomizer : MonoBehaviour
 {
-    public GameObject spiderRoot; // Drag "Testspider2"
+    public GameObject spiderRoot; // Reference to root spider object (e.g., "FinalSpider2")
     public TMP_Text currentSegmentLabel;
-    public Slider xSlider, ySlider, zSlider;
+    public Slider xSlider, ySlider, zSlider;// Sliders for X/Y/Z scaling
 
-    private string currentSegmentName = "patella";
-    private Dictionary<string, GameObject> legRoots = new();
-    private List<Toggle> legToggles = new();
+    private string currentSegmentName = "patella";  // Default selected segment
+    private Dictionary<string, GameObject> legRoots = new(); // Map of leg names to their GameObjects
+    private List<Toggle> legToggles = new(); // Toggles for selecting legs
 
     // for color picker
     private Color lastColor;
     public FlexibleColorPicker colorPicker;
 
-
+    // Slider value display
     public TMP_Text xValueText;
     public TMP_Text yValueText;
     public TMP_Text zValueText;
 
-
+    // Materials available for skin
     public List<Material> spiderSkinMaterials = new();
 
     [HideInInspector]
-    public Toggle applyToAllSegmentsToggle;
+    public Toggle applyToAllSegmentsToggle; // Toggle to apply changes to all segments of selected legs
 
 
     [Header("UI Panels")]
@@ -55,7 +60,7 @@ public class SpiderSegmentCustomizer : MonoBehaviour
     public Color inactiveTabColor = Color.gray;
 
     [Header("Segment Buttons")]
-    public List<Button> segmentButtons = new List<Button>();
+    public List<Button> segmentButtons = new List<Button>(); // Buttons for selecting segments (e.g., coxa, femur...)
 
     [Header("Segment Colors")]
     public Color activeSegmentColor = Color.white;
@@ -76,8 +81,9 @@ public class SpiderSegmentCustomizer : MonoBehaviour
     
     // for launching the spider
     public GameObject customizationUI; // reference to the parent Panel
-    public GameObject spiderGameMode; // e.g. camera, input scripts, etc.
 
+
+    // Predefined color buttons (Discarded in favor of color picker)
     private Dictionary<string, Color> colorMap = new()
     {
         {"Color_Red", Color.red},
@@ -196,7 +202,7 @@ public class SpiderSegmentCustomizer : MonoBehaviour
         }
 
 
-        //for color picker
+        //Initialise color picker
         if (colorPicker != null)
         {
             lastColor = colorPicker.color;
@@ -214,6 +220,7 @@ public class SpiderSegmentCustomizer : MonoBehaviour
 
     private void Update()
     {
+        // Detect color changes from color picker
         if (colorPicker == null) return;
 
         Color current = colorPicker.color;
@@ -225,10 +232,15 @@ public class SpiderSegmentCustomizer : MonoBehaviour
         }
     }
 
+
+
+    /// <summary>
+    /// Switches the active segment (updates UI + sliders).
+    /// </summary>
     public void SetSegment(string name)
     {
 
-
+        // Update button highlight states
         foreach (var btn in segmentButtons)
         {
             if (btn == null) continue;
@@ -266,6 +278,11 @@ public class SpiderSegmentCustomizer : MonoBehaviour
 
     }
 
+
+
+    /// <summary>
+    /// Sets the color of selected segment(s) or all segments of selected legs.
+    /// </summary>
     public void SetColor(Color color)
     {
         var targets = applyToAllSegmentsToggle.isOn
@@ -280,6 +297,12 @@ public class SpiderSegmentCustomizer : MonoBehaviour
         }
     }
 
+
+
+    /// <summary>
+    /// Scale handlers for sliders (X/Y/Z).
+    /// Updates IK solvers after scaling.
+    /// </summary>
 
     public void SetXScale(float value)
     {
@@ -346,7 +369,9 @@ public class SpiderSegmentCustomizer : MonoBehaviour
 
     }
 
-
+    /// <summary>
+    /// Applies scaling along a given axis to selected segments.
+    /// </summary>
     private void ApplyScale(float value, string axis)
     {
         var segments = GetSelectedLegSegments();
@@ -364,6 +389,10 @@ public class SpiderSegmentCustomizer : MonoBehaviour
         }
     }
 
+
+    /// <summary>
+    /// Returns list of currently selected leg segments.
+    /// </summary>
     private List<GameObject> GetSelectedLegSegments()
     {
         var result = new List<GameObject>();
@@ -381,6 +410,11 @@ public class SpiderSegmentCustomizer : MonoBehaviour
         return result;
     }
 
+
+
+    /// <summary>
+    /// Searches for a segment inside a given leg hierarchy.
+    /// </summary>
     private Transform FindSegmentInLeg(Transform legRoot, string segmentName)
     {
         foreach (Transform child in legRoot.GetComponentsInChildren<Transform>(true))
@@ -411,6 +445,10 @@ public class SpiderSegmentCustomizer : MonoBehaviour
 
     }
 
+
+    /// <summary>
+    /// Applies a material to selected segment(s).
+    /// </summary>
     public void SetMaterial(Material mat)
     {
         var targets = applyToAllSegmentsToggle.isOn
@@ -425,6 +463,10 @@ public class SpiderSegmentCustomizer : MonoBehaviour
         }
     }
 
+
+    /// <summary>
+    /// Gets all segments of selected legs (not just current segment).
+    /// </summary>
     private List<GameObject> GetAllSegmentsOfSelectedLegs()
     {
         var result = new List<GameObject>();
@@ -446,6 +488,11 @@ public class SpiderSegmentCustomizer : MonoBehaviour
         return result;
     }
 
+
+
+    /// <summary>
+    /// Shows the correct panel and updates UI tab colors and cameras.
+    /// </summary>
     public void ShowPanel(string name)
     {
         // Toggle panel visibility
@@ -479,6 +526,10 @@ public class SpiderSegmentCustomizer : MonoBehaviour
         }
     }
 
+
+    /// <summary>
+    /// Updates leg toggle highlight colors.
+    /// </summary>
     public void UpdateLegHighlights()
     {
         foreach (var toggle in legToggles)
@@ -492,6 +543,11 @@ public class SpiderSegmentCustomizer : MonoBehaviour
         }
     }
 
+
+
+    /// <summary>
+    /// Switches active Cinemachine camera based on selected panel.
+    /// </summary>
     public void SetCameraView(string view)
     {
         cmBaseModel.Priority = (view == "baseModel" ? 10 : 0);
@@ -502,18 +558,22 @@ public class SpiderSegmentCustomizer : MonoBehaviour
     }
 
 
-
+    /// <summary>
+    /// Launches spider (switches from customization UI to game mode).
+    /// </summary>
     public void LaunchSpider()
     {
         Debug.Log("Launching spider! ");
 
         customizationUI.SetActive(false);     // hide UI
-        //spiderGameMode.SetActive(true);       // show game mode logic
 
     }
 
 
-
+    /// <summary>
+    /// Updates "BodyTarget" objects to align with leg tips.
+    /// Ensures IK targets stay in sync after scaling.
+    /// </summary>
     private void UpdateBodyTargetsToLegTips()
     {
         var allTargets = spiderRoot.GetComponentsInChildren<Transform>(true)

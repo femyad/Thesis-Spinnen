@@ -4,16 +4,25 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+
+
+/// <summary>
+/// Handles customization of the abdomen and spinnerets:
+/// - Scaling, rotation, and overlap compensation
+/// - Changing meshes (shapes) and textures
+/// - Syncing with UI sliders, buttons, and color picker
+/// - Supports switching between basic and advanced abdomen panels
+/// </summary>
 public class AbdomenCustomizer : MonoBehaviour
 {
     [Header("Target Objects")]
-    public GameObject abdomenObject;
-    public GameObject spinneretObject;
-    public GameObject spiderRoot;
+    public GameObject abdomenObject; // Main abdomen mesh
+    public GameObject spinneretObject; // Spinneret mesh
+    public GameObject spiderRoot; // Root spider object (used to access GeneralScaler)
 
     [Header("Abdomen Panel References")]
-    public GameObject panelAbdomen1;
-    public GameObject panelAbdomen2;
+    public GameObject panelAbdomen1; // Basic abdomen UI panel
+    public GameObject panelAbdomen2;  // Advanced abdomen UI panel
 
     [Header("Scale Sliders")]
     public Slider xScaleSlider;
@@ -48,25 +57,26 @@ public class AbdomenCustomizer : MonoBehaviour
     public TMP_Text compZValue;
 
     [Header("Abdomen Shapes")]
-    public List<Button> abdomenShapeButtons;
-    public List<GameObject> abdomenPrefabs;
+    public List<Button> abdomenShapeButtons; // Buttons to switch spinneret shape
+    public List<GameObject> abdomenPrefabs; // Prefabs providing alternative abdomen meshes
 
     [Header("Spinneret Shapes")]
-    public List<Button> spinneretButtons;
-    public List<GameObject> spinneretPrefabs;
+    public List<Button> spinneretButtons; // Buttons to switch spinneret shape
+    public List<GameObject> spinneretPrefabs;   // Prefabs providing alternative spinneret meshes
 
     [Header("Textures")]
-    public List<Button> textureButtons;
-    public List<Material> textureMaterials;
+    public List<Button> textureButtons; // Buttons to switch texture
+    public List<Material> textureMaterials; // Texture materials to apply
 
     [Header("Color Picker")]
-    public FlexibleColorPicker colorPicker;
+    public FlexibleColorPicker colorPicker; // Color picker reference
 
-    private Material abdomenMaterialInstance;
-    private GeneralScaler generalScaler;
+    private Material abdomenMaterialInstance; // Instance of the abdomen material 
+    private GeneralScaler generalScaler; // Reference to GeneralScaler for compensation
 
     void Start()
     {
+        // Initialize UI bindings
         InitSliders();
         InitAbdomenButtons();
         InitSpinneretButtons();
@@ -74,20 +84,29 @@ public class AbdomenCustomizer : MonoBehaviour
         SetupInitialMaterial();
         SyncSlidersWithAbdomen();
 
+
+        // Connect with GeneralScaler for compensation adjustments
         generalScaler = spiderRoot.GetComponent<GeneralScaler>();
         SyncCompensationSliders();
+
+        // Hide advanced panel by default
         panelAbdomen2.SetActive(false);
 
     }
 
     void Update()
     {
+        // Continuously apply color picker value to material
         if (abdomenMaterialInstance != null)
         {
             abdomenMaterialInstance.color = colorPicker.color;
         }
     }
 
+    /// <summary>
+    /// Creates a new abdomen material instance and assigns it to abdomen and spinnerets.
+    /// Ensures shared color between both.
+    /// </summary>
     void SetupInitialMaterial()
     {
         if (abdomenObject == null) return;
@@ -110,6 +129,11 @@ public class AbdomenCustomizer : MonoBehaviour
         }
     }
 
+
+    /// <summary>
+    /// Binds slider events for abdomen scale, rotation, spinneret size, and compensation.
+    /// Updates UI labels accordingly.
+    /// </summary>
     void InitSliders()
     {
         xScaleSlider.onValueChanged.AddListener((v) => {
@@ -175,6 +199,7 @@ public class AbdomenCustomizer : MonoBehaviour
             spinneretZValue.text = v.ToString("F2");
         });
 
+        // Compensation sliders (connected to GeneralScaler)
         compXSlider.onValueChanged.AddListener((v) => {
             if (generalScaler != null)
             {
@@ -200,6 +225,9 @@ public class AbdomenCustomizer : MonoBehaviour
         });
     }
 
+    /// <summary>
+    /// Syncs abdomen and spinneret slider values with their actual transforms.
+    /// </summary>
     void SyncSlidersWithAbdomen()
     {
         if (abdomenObject != null)
@@ -207,6 +235,7 @@ public class AbdomenCustomizer : MonoBehaviour
             Vector3 scale = abdomenObject.transform.localScale;
             Vector3 rot = abdomenObject.transform.localEulerAngles;
 
+            // Update scale sliders + labels
             xScaleSlider.SetValueWithoutNotify(scale.x);
             yScaleSlider.SetValueWithoutNotify(scale.y);
             zScaleSlider.SetValueWithoutNotify(scale.z);
@@ -214,6 +243,7 @@ public class AbdomenCustomizer : MonoBehaviour
             yScaleValue.text = scale.y.ToString("F2");
             zScaleValue.text = scale.z.ToString("F2");
 
+            // Update rotation sliders + labels
             xRotationSlider.SetValueWithoutNotify(rot.x);
             yRotationSlider.SetValueWithoutNotify(rot.y);
             zRotationSlider.SetValueWithoutNotify(rot.z);
@@ -226,6 +256,7 @@ public class AbdomenCustomizer : MonoBehaviour
         {
             Vector3 spScale = spinneretObject.transform.localScale;
 
+            // Update spinneret sliders + labels
             spinneretXSlider.SetValueWithoutNotify(spScale.x);
             spinneretYSlider.SetValueWithoutNotify(spScale.y);
             spinneretZSlider.SetValueWithoutNotify(spScale.z);
@@ -236,6 +267,9 @@ public class AbdomenCustomizer : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Syncs compensation sliders with current values from GeneralScaler.
+    /// </summary>
     void SyncCompensationSliders()
     {
         if (generalScaler == null) return;
@@ -250,6 +284,10 @@ public class AbdomenCustomizer : MonoBehaviour
         compZValue.text = comp.z.ToString("F2");
     }
 
+
+    /// <summary>
+    /// Initializes abdomen shape buttons (replaces mesh when clicked).
+    /// </summary>
     void InitAbdomenButtons()
     {
         for (int i = 0; i < abdomenShapeButtons.Count; i++)
@@ -287,7 +325,9 @@ public class AbdomenCustomizer : MonoBehaviour
         }
     }
 
-
+    /// <summary>
+    /// Initializes spinneret shape buttons (replaces mesh when clicked).
+    /// </summary>
     void InitSpinneretButtons()
     {
         for (int i = 0; i < spinneretButtons.Count; i++)
@@ -325,6 +365,9 @@ public class AbdomenCustomizer : MonoBehaviour
     }
 
 
+    /// <summary>
+    /// Extracts mesh reference from prefab.
+    /// </summary>
     Mesh ExtractMeshFromPrefab(GameObject prefab)
     {
         var mf = prefab.GetComponentInChildren<MeshFilter>(true);
@@ -337,6 +380,9 @@ public class AbdomenCustomizer : MonoBehaviour
     }
 
 
+    /// <summary>
+    /// Initializes texture buttons (applies material on click).
+    /// </summary>
     void InitTextureButtons()
     {
         for (int i = 0; i < textureButtons.Count; i++)
@@ -348,6 +394,9 @@ public class AbdomenCustomizer : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Applies new material to abdomen + spinnerets and syncs with color picker.
+    /// </summary>
     void SetAbdomenMaterial(Material mat)
     {
         if (abdomenObject != null)
@@ -371,6 +420,9 @@ public class AbdomenCustomizer : MonoBehaviour
             colorPicker.SetColor(abdomenMaterialInstance.color);
     }
 
+    /// <summary>
+    /// Switches to advanced abdomen panel (hides other children of panelAbdomen1).
+    /// </summary>
     public void ShowAdvancedAbdomenPanel()
     {
         
@@ -385,6 +437,10 @@ public class AbdomenCustomizer : MonoBehaviour
         panelAbdomen2.SetActive(true);
     }
 
+
+    /// <summary>
+    /// Returns to basic abdomen panel (restores children visibility).
+    /// </summary>
     public void ReturnToBasicAbdomenPanel()
     {
         

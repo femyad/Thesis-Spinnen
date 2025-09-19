@@ -3,6 +3,17 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
 
+
+
+/// <summary>
+/// Handles customization of the prosoma and its attachments (pedipalps, chelicerae, eyes).
+/// - Scaling and rotation via sliders
+/// - Size adjustments of attachments
+/// - Material and texture changes
+/// - Shape changes (prosoma and eyes)
+/// - Compensation syncing with GeneralScaler
+/// - Switch between basic and advanced panels
+/// </summary>
 public class ProsomaCustomizer : MonoBehaviour
 {
     [Header("Target Objects")]
@@ -15,8 +26,8 @@ public class ProsomaCustomizer : MonoBehaviour
     public GameObject spiderRoot;
 
     [Header("Panels")]
-    public GameObject panelProsoma;
-    public GameObject panelProsoma2;
+    public GameObject panelProsoma; // Basic panel
+    public GameObject panelProsoma2; // Advanced panel
 
     [Header("Scale Sliders")]
     public Slider xScaleSlider;
@@ -67,11 +78,11 @@ public class ProsomaCustomizer : MonoBehaviour
     public TMP_Text compZValue;
 
     [Header("Color Picker")]
-    public FlexibleColorPicker colorPicker;
+    public FlexibleColorPicker colorPicker; // Reference to the color picker
 
     [Header("Textures")]
-    public List<Button> textureButtons;
-    public List<Material> textureMaterials;
+    public List<Button> textureButtons; // Buttons to select textures
+    public List<Material> textureMaterials; // Corresponding materials for textures
 
     [Header("Prosoma Shape Selection")]
     public List<GameObject> prosomaPrefabs;
@@ -82,9 +93,10 @@ public class ProsomaCustomizer : MonoBehaviour
     public List<GameObject> eyePrefabs;
     public List<Button> eyeShapeButtons;
 
-    private Material sharedMaterial;
-    private GeneralScaler generalScaler;
+    private Material sharedMaterial; // Shared material applied to all parts
+    private GeneralScaler generalScaler; // Reference to GeneralScaler for compensation syncing
 
+    // Offsets and initial rotations for attachments
     private Vector3 offsetPedipalpL;
     private Vector3 offsetPedipalpR;
     private Vector3 offsetCheliceraeL;
@@ -100,17 +112,21 @@ public class ProsomaCustomizer : MonoBehaviour
 
     void Start()
     {
+        // Initialize UI elements 
         InitSliders();
         InitTextureButtons();
         InitProsomaShapeButtons();
         InitEyeShapeButtons();
 
+        // Setup GeneralScaler and initial offsets
         generalScaler = spiderRoot.GetComponent<GeneralScaler>();
 
+        // Create and apply shared material
         sharedMaterial = new Material(Shader.Find("Standard"));
         ApplyMaterialToAllTargets(sharedMaterial);
         colorPicker.SetColor(sharedMaterial.color);
 
+        // store initial offsets and rotations
         initialProsomaRotation = prosomaObject.transform.rotation;
 
         if (pedipalpLeft)
@@ -143,7 +159,7 @@ public class ProsomaCustomizer : MonoBehaviour
             initialEyesRot = eyes.transform.rotation;
         }
 
-
+        // Register attachments with GeneralScaler
         generalScaler.SetupProsomaAttachments(
         pedipalpLeft?.transform,
         pedipalpRight?.transform,
@@ -163,6 +179,7 @@ public class ProsomaCustomizer : MonoBehaviour
         initialEyesRot
         );
 
+        //setup legs references 
         Transform[] legRefs = new Transform[8];
         Vector3[] legOffsets = new Vector3[8];
         Quaternion[] legRotations = new Quaternion[8];
@@ -188,21 +205,23 @@ public class ProsomaCustomizer : MonoBehaviour
         generalScaler.SetupLegAttachments(legRefs, legOffsets, legRotations);
 
 
-
+        //sync initial UI values
         SyncTransformValues();
         SyncCompensationSliders();
         SyncSizeSliders();
 
-        panelProsoma2.SetActive(false);
+        panelProsoma2.SetActive(false); //hide advanced panel at start
     }
 
 
 
     void LateUpdate()
     {
+        //sync color from picker to material
         if (sharedMaterial != null)
             sharedMaterial.color = colorPicker.color;
 
+        // Apply scale and rotation changes to attachments
         Vector3 compScale = new Vector3(
             prosomaObject.transform.localScale.x * (1 - generalScaler.prosomaOverlapCompensation.x),
             prosomaObject.transform.localScale.y * (1 - generalScaler.prosomaOverlapCompensation.y),
@@ -213,6 +232,7 @@ public class ProsomaCustomizer : MonoBehaviour
         Quaternion deltaRotation = currentProsomaRot * Quaternion.Inverse(initialProsomaRotation);
         Vector3 pos = prosomaObject.transform.position;
 
+        //update attachments positions and rotations
         if (pedipalpLeft)
         {
             Vector3 scaled = Vector3.Scale(offsetPedipalpL, compScale);
@@ -249,9 +269,12 @@ public class ProsomaCustomizer : MonoBehaviour
         }
     }
 
-
+    /// <summary>
+    /// Initializes slider listeners for scale, rotation, and attachment size.
+    /// </summary>
     void InitSliders()
     {
+        // Prosoma scale sliders
         xScaleSlider.onValueChanged.AddListener(v => {
             Vector3 s = prosomaObject.transform.localScale;
             s.x = v;
@@ -273,6 +296,7 @@ public class ProsomaCustomizer : MonoBehaviour
             zScaleValue.text = v.ToString("F2");
         });
 
+        // Prosoma rotation sliders
         xRotationSlider.onValueChanged.AddListener(v => {
             Vector3 r = prosomaObject.transform.localEulerAngles;
             r.x = v;
@@ -294,6 +318,7 @@ public class ProsomaCustomizer : MonoBehaviour
             zRotationValue.text = r.z.ToString("F0") + "°";
         });
 
+        // Attachment size sliders
         SetupSizeSlider(pedipalpLeft, pedipalpRight, pedipalpXSlider, pedipalpXValue, "x");
         SetupSizeSlider(pedipalpLeft, pedipalpRight, pedipalpYSlider, pedipalpYValue, "y");
         SetupSizeSlider(pedipalpLeft, pedipalpRight, pedipalpZSlider, pedipalpZValue, "z");
@@ -306,6 +331,7 @@ public class ProsomaCustomizer : MonoBehaviour
         SetupSizeSlider(eyes, null, eyesYSlider, eyesYValue, "y");
         SetupSizeSlider(eyes, null, eyesZSlider, eyesZValue, "z");
 
+        // Compensation sliders (for GeneralScaler)
         compXSlider.onValueChanged.AddListener(v => {
             generalScaler.prosomaOverlapCompensation.x = v;
             compXValue.text = v.ToString("F2");
@@ -322,6 +348,9 @@ public class ProsomaCustomizer : MonoBehaviour
         });
     }
 
+    /// <summary>
+    /// Generic size slider setup for paired or single objects.
+    /// </summary>
     void SetupSizeSlider(GameObject left, GameObject right, Slider slider, TMP_Text label, string axis)
     {
         slider.onValueChanged.AddListener(v => {
@@ -331,6 +360,9 @@ public class ProsomaCustomizer : MonoBehaviour
         });
     }
 
+    /// <summary>
+    /// Applies new value to one axis of a vector.
+    /// </summary>
     Vector3 ApplyAxis(Vector3 original, float value, string axis)
     {
         return axis switch
@@ -342,6 +374,9 @@ public class ProsomaCustomizer : MonoBehaviour
         };
     }
 
+    /// <summary>
+    /// Applies material to prosoma and all attachments.
+    /// </summary>
     void ApplyMaterialToAllTargets(Material mat)
     {
         foreach (var part in new[] { prosomaObject, pedipalpLeft, pedipalpRight, cheliceraeLeft, cheliceraeRight, eyes })
@@ -352,6 +387,9 @@ public class ProsomaCustomizer : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Initializes texture buttons (apply materials).
+    /// </summary>
     void InitTextureButtons()
     {
         for (int i = 0; i < textureButtons.Count; i++)
@@ -365,23 +403,11 @@ public class ProsomaCustomizer : MonoBehaviour
         }
     }
 
-    /* void InitProsomaShapeButtons()
-     {
-         for (int i = 0; i < prosomaShapeButtons.Count; i++)
-         {
-             int index = i;
-             prosomaShapeButtons[i].onClick.AddListener(() => {
-                 foreach (var p in prosomaPrefabs) p.SetActive(false);
-                 prosomaPrefabs[index].SetActive(true);
-                 prosomaObject = prosomaPrefabs[index];
-                 ApplyMaterialToAllTargets(sharedMaterial);
-                 SyncTransformValues();
-             });
-         }
-     }*/
 
 
-
+    /// <summary>
+    /// Initializes prosoma shape buttons (replace mesh).
+    /// </summary>
     void InitProsomaShapeButtons()
     {
         for (int i = 0; i < prosomaShapeButtons.Count; i++)
@@ -416,7 +442,9 @@ public class ProsomaCustomizer : MonoBehaviour
     }
 
 
-
+    /// <summary>
+    /// Initializes eye shape buttons (replace mesh).
+    /// </summary>
     void InitEyeShapeButtons()
     {
         for (int i = 0; i < eyeShapeButtons.Count; i++)
@@ -451,6 +479,10 @@ public class ProsomaCustomizer : MonoBehaviour
     }
 
 
+
+    /// <summary>
+    /// Extracts mesh from prefab (supports MeshFilter and SkinnedMeshRenderer).
+    /// </summary>
     Mesh ExtractMeshFromPrefab(GameObject prefab)
     {
         var mf = prefab.GetComponentInChildren<MeshFilter>(true);
@@ -462,6 +494,10 @@ public class ProsomaCustomizer : MonoBehaviour
         return null;
     }
 
+
+    /// <summary>
+    /// Syncs transform sliders with current prosoma values.
+    /// </summary>
     void SyncTransformValues()
     {
         Vector3 s = prosomaObject.transform.localScale;
